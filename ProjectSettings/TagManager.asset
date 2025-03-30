@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Anchor
   - Key
+  - Wall
+  - Door
   layers:
   - Default
   - TransparentFX
@@ -13,8 +15,8 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
+  - Wall
+  - Key
   - 
   - 
   - 
