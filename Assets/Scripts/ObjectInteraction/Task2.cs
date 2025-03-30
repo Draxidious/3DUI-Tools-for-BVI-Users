@@ -15,6 +15,8 @@ public class Task2 : MonoBehaviour
     public UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable doorHandle;
     public Rigidbody doorRigidbody;
 
+    public GameObject task3;
+
     bool doorLocked = true;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -62,6 +64,7 @@ public class Task2 : MonoBehaviour
         successSound.Play();
         speaker.Speak("Great work!");
         this.gameObject.SetActive(false);
+        task3.SetActive(true);
 
         GameObject[] objects = GameObject.FindGameObjectsWithTag("Door");
         foreach (GameObject obj in objects)
@@ -69,11 +72,7 @@ public class Task2 : MonoBehaviour
             obj.SetActive(false);
         }
 
-        objects = GameObject.FindGameObjectsWithTag("Key");
-        foreach (GameObject obj in objects)
-        {
-            obj.SetActive(false);
-        }
+        
 
     }
 }
