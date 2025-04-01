@@ -20,7 +20,7 @@ public class Task3 : MonoBehaviour
     private IEnumerator WaitAndSpeak()
     {
         yield return new WaitForSecondsRealtime(2);
-        speaker.Speak("For the final task, please put the cannonball into the cannon");
+        speaker.SpeakQueued("For the final task, please put the cannonball into the cannon");
         GameObject[] objects = GameObject.FindGameObjectsWithTag("Key");
         foreach (GameObject obj in objects)
         {
@@ -32,7 +32,7 @@ public class Task3 : MonoBehaviour
     public void CompleteTask()
     {
         successSound.Play();
-        speaker.Speak("Great work! You've completed all of the tasks!");
+        speaker.SpeakQueued("Great work! You've completed all of the tasks!");
         this.gameObject.SetActive(false);
 
         GameObject[] objects = GameObject.FindGameObjectsWithTag("Cannonball");

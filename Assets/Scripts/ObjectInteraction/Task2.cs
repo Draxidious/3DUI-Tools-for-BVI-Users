@@ -30,7 +30,7 @@ public class Task2 : MonoBehaviour
     private IEnumerator WaitAndSpeak()
     {
         yield return new WaitForSecondsRealtime(2);
-        speaker.Speak("Now, take the key and unlock the door. Make sure to open the door all the way");
+        speaker.SpeakQueued("Now, take the key and unlock the door. Make sure to open the door all the way");
         // Add code to make the speaker speak here
     }
 
@@ -62,7 +62,7 @@ public class Task2 : MonoBehaviour
     public void CompleteTask()
     {
         successSound.Play();
-        speaker.Speak("Great work!");
+        speaker.SpeakQueued("Great work!");
         this.gameObject.SetActive(false);
         task3.SetActive(true);
 
