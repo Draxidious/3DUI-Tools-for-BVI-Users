@@ -37,7 +37,7 @@ public class BVICollider : MonoBehaviour
     {
         GameObject obj = other.gameObject;
         // Filter out unwanted objects.
-        if (obj.name == "XR Origin (XR Rig)" || obj.name == "Collider")
+        if (obj.name == "XR Origin (XR Rig)" || obj.name.Contains("BVICollider"))
             return;
 
         if (!enteredObjects.Contains(obj))
@@ -59,11 +59,11 @@ public class BVICollider : MonoBehaviour
     // For testing, press Space to trigger announcements.
     private void Update()
     {
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
-        {
-            // For example, include all directions.
-            AnnounceObjects(true, true, true, true);
-        }
+        //if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        //{
+        //    // For example, include all directions.
+        //    AnnounceObjects(true, true, true, true);
+        //}
     }
 
     /// <summary>
