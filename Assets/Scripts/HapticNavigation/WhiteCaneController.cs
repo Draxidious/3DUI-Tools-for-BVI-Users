@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,12 +7,15 @@ using XRInputDevice = UnityEngine.XR.InputDevice;
 public class WhiteCaneController : MonoBehaviour
 {
     public GameObject canePrefab;
-    public Transform controllerTransform; // ? Assign your CaneAnchor GameObject here
+    public Transform controllerTransform; // Assign CaneAnchor
+    public GameObject hapticNavigatorObject; // Assign HapticNavigator GameObject in Inspector
 
     private GameObject activeCane;
-    private FixedJoint joint;
     private XRInputDevice rightDevice;
     private InputAction toggleCaneAction;
+
+    private Vector3 localOffset = new Vector3(0f, 0f, 0.6f);
+    private Quaternion localRotation = Quaternion.Euler(90f, 0f, 0f);
 
     void Start()
     {
@@ -40,65 +42,39 @@ public class WhiteCaneController : MonoBehaviour
     private void SpawnCane()
     {
         activeCane = Instantiate(canePrefab);
-        Rigidbody caneRb = activeCane.GetComponent<Rigidbody>();
-        caneRb.isKinematic = false;
-        caneRb.useGravity = true;
-        caneRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        UpdateCaneTransform();
 
-        // Snap the cane's AttachPoint to the anchor position
-        Transform attachPoint = activeCane.transform.Find("AttachPoint");
-        if (attachPoint != null)
-        {
-            // Match rotation first (optional)
-            activeCane.transform.rotation = controllerTransform.rotation;
-
-            // Move cane so AttachPoint lines up with anchor
-            Vector3 offset = controllerTransform.position - attachPoint.position;
-            activeCane.transform.position += offset;
-        }
-
-        StartCoroutine(AttachCaneSafely(caneRb));
+        // Disable haptic navigation system
+        if (hapticNavigatorObject != null)
+            hapticNavigatorObject.SetActive(false);
     }
 
-    private IEnumerator AttachCaneSafely(Rigidbody caneRb)
+    private void LateUpdate()
     {
-        yield return new WaitForFixedUpdate();
+        if (activeCane != null)
+        {
+            UpdateCaneTransform();
+        }
+    }
 
-        // Reset movement to avoid fighting forces
-        caneRb.linearVelocity = Vector3.zero;
-        caneRb.angularVelocity = Vector3.zero;
+    private void UpdateCaneTransform()
+    {
+        if (controllerTransform == null || activeCane == null) return;
 
-        // Clean up any previous joint
-        FixedJoint existingJoint = controllerTransform.GetComponent<FixedJoint>();
-        if (existingJoint != null)
-            Destroy(existingJoint);
-
-        joint = controllerTransform.gameObject.AddComponent<FixedJoint>();
-        joint.connectedBody = caneRb;
-        joint.breakForce = float.PositiveInfinity;
-        joint.breakTorque = float.PositiveInfinity;
-
-        // Optional: reduce force transfer from collisions
-        caneRb.mass = 0.2f;
-        caneRb.linearDamping = 1.5f;
-        caneRb.angularDamping = 3f;
-
-        // Optional: disable collision between cane and controller
-        Collider controllerCol = controllerTransform.GetComponent<Collider>();
-        Collider caneCol = activeCane.GetComponent<Collider>();
-        if (controllerCol != null && caneCol != null)
-            Physics.IgnoreCollision(controllerCol, caneCol, true);
+        activeCane.transform.position = controllerTransform.TransformPoint(localOffset);
+        activeCane.transform.rotation = controllerTransform.rotation * localRotation;
     }
 
     private void RemoveCane()
     {
-        if (joint != null)
-            Destroy(joint);
-
         if (activeCane != null)
         {
             Destroy(activeCane);
             activeCane = null;
+
+            // Reactivate haptic navigation system
+            if (hapticNavigatorObject != null)
+                hapticNavigatorObject.SetActive(true);
         }
     }
 

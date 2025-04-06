@@ -18,12 +18,12 @@ public class WhiteCaneTip : MonoBehaviour
             rightHand = devices[0];
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerEnter(Collider other)
     {
         if (rightHand.isValid)
         {
-            rightHand.SendHapticImpulse(0u, 0.6f, 0.1f);
-            Debug.Log("Cane hit: " + collision.gameObject.name);
+            rightHand.SendHapticImpulse(0u, 0.7f, 0.1f);
+            Debug.Log("Cane touched: " + other.gameObject.name);
         }
     }
 }
