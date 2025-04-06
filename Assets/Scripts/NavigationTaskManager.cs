@@ -10,9 +10,15 @@ public class NavigationTaskManager : MonoBehaviour
     public Transform pointB;
     public Transform pointC;
     public Transform pointD;
+
+    public Transform pointA1;
+    public Transform pointB1;
+    public Transform pointB2;
+    public Transform pointC1;
+    
     public HapticNavigator hapticNavigator;
 
-    private bool[] pointsReached = new bool[4]; // A = 0, B = 1, C = 2, D = 3
+    private bool[] pointsReached = new bool[8]; // A = 0, B = 1, C = 2, D = 3
     private InputDevice leftController;
     private InputDevice rightController;
 
@@ -20,7 +26,7 @@ public class NavigationTaskManager : MonoBehaviour
     {
         pointsReached[0] = true; // Start at A
         EnsureControllersAreValid();
-        hapticNavigator.SetTarget(pointB); // Start guiding to B
+        hapticNavigator.SetTarget(pointA1); // Start guiding to B
         StartCoroutine(WelcomeMessage());
     }
 
@@ -36,24 +42,36 @@ public class NavigationTaskManager : MonoBehaviour
 
         int index = pointID switch
         {
-            "B" => 1,
-            "C" => 2,
-            "D" => 3,
+            "A1"=>1,
+            "B" => 2,
+            "B1"=>3,
+            "B2" => 4,
+            "C" => 5,
+            "C1" => 6,
+            "D" => 7,
             _ => -1
         };
 
         if (index >= 0 && !pointsReached[index])
         {
             pointsReached[index] = true;
-            tts.Speak($"You have reached point {pointID}");
-            arrivalSound.Play();
+            if (pointID == "B"| pointID == "C" | pointID == "D")
+            {
+                tts.Speak($"You have reached point {pointID}");
+                arrivalSound.Play();
+            }
+            
 
             SendHaptic(leftController, 0.8f, 0.2f);
             SendHaptic(rightController, 0.8f, 0.2f);
 
             // Set new navigation target
-            if (pointID == "B") hapticNavigator.SetTarget(pointC);
-            if (pointID == "C") hapticNavigator.SetTarget(pointD);
+            if (pointID == "A1") hapticNavigator.SetTarget(pointB);
+            if (pointID == "B") hapticNavigator.SetTarget(pointB1);
+            if (pointID == "B1") hapticNavigator.SetTarget(pointB2);
+            if (pointID == "B2") hapticNavigator.SetTarget(pointC);
+            if (pointID == "C") hapticNavigator.SetTarget(pointC1);
+            if (pointID == "C1") hapticNavigator.SetTarget(pointD);
             if (pointID == "D") hapticNavigator.SetTarget(null);
         }
 
