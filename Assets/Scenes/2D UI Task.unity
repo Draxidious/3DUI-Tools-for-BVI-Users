@@ -5486,6 +5486,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1347583433727291527, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: customWitVoiceSettings.pitch
+      value: 85
+      objectReference: {fileID: 0}
+    - target: {fileID: 1347583433727291527, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: customWitVoiceSettings.speed
       value: 160
       objectReference: {fileID: 0}
@@ -9944,7 +9948,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
@@ -27119,6 +27123,7 @@ MonoBehaviour:
   - {fileID: 716994945}
   - {fileID: 1249617917}
   announcementCooldown: 2
+  repeatAnnounceDelay: 10
   hitColor: {r: 0, g: 1, b: 0, a: 1}
   ignoredColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   noHitColor: {r: 1, g: 0, b: 0, a: 1}
