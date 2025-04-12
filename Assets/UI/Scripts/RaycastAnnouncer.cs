@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic; // Required for List<>
 using Meta.WitAi.TTS.Utilities;  // Required for TTSSpeaker
+using System.Text.RegularExpressions;
 
 // Automatically adds required components if they don't exist
 [RequireComponent(typeof(LineRenderer))]
@@ -61,8 +62,10 @@ public class RaycastAnnouncer : MonoBehaviour
 	private float lastAnnouncementTime = -Mathf.Infinity; // Time for general cooldown
 	private RaycastHit lastHitInfo; // Store hit info for Gizmo drawing
 	private bool wasHitLastFrame = false; // Store hit status for Gizmo drawing
-
-
+	public bool describe =false;
+	string lastHit;
+	string messageToSpeak;
+	private static readonly Regex nameCleaningRegex = new Regex(@"(\s*\(\d+\)|\d+)$", RegexOptions.Compiled);
 	/// <summary>
 	/// Called when the script instance is being loaded.
 	/// </summary>
@@ -88,7 +91,8 @@ public class RaycastAnnouncer : MonoBehaviour
 		wasHitLastFrame = false;
 		lastAnnouncementTime = -Mathf.Infinity; // Allow first announcement
 	}
-
+	
+	
 	/// <summary>
 	/// Called every frame. Handles spherecasting, automatic TTS announcements (with general cooldown and same-object repeat delay),
 	/// click sound logic, and visualization updates.
@@ -163,19 +167,21 @@ public class RaycastAnnouncer : MonoBehaviour
 						// Play Sound Effect
 						if (contactSound != null) { audioSource.PlayOneShot(contactSound); }
 						else { /* Warning Log */ }
+						
+							// Announce via TTS
+							string objectName = currentlyHitObject.name;
+							float distance = hitInfo.distance;
+							string distanceString = distance.ToString("F1");
+						string clean = CleanName(objectName);
+							messageToSpeak = $"{clean} is {distanceString} meters away";
 
-						// Announce via TTS
-						string objectName = currentlyHitObject.name;
-						float distance = hitInfo.distance;
-						string distanceString = distance.ToString("F1");
-						string messageToSpeak = $"{objectName} is {distanceString} meters away";
+							Debug.Log($"Announcing: \"{messageToSpeak}\" (Object: {(currentlyHitObject == lastAnnouncedObject ? "Same" : "New")})");
+						
 
-						Debug.Log($"Announcing: \"{messageToSpeak}\" (Object: {(currentlyHitObject == lastAnnouncedObject ? "Same" : "New")})");
-						ttsSpeaker.SpeakQueued(messageToSpeak);
-
-						// Update state AFTER announcing
-						lastAnnouncedObject = currentlyHitObject; // Remember this object
-						lastAnnouncementTime = Time.time;      // Reset timer for BOTH cooldowns
+							// Update state AFTER announcing
+							lastAnnouncedObject = currentlyHitObject; // Remember this object
+							lastAnnouncementTime = Time.time;      // Reset timer for BOTH cooldowns		// Announce via TTS
+						
 					}
 				}
 				// If general cooldown hasn't elapsed, do nothing this frame
@@ -195,6 +201,11 @@ public class RaycastAnnouncer : MonoBehaviour
 			lineEndPoint = origin + direction * maxCastDistance;
 			currentLineColor = noHitColor;
 			// Don't clear lastAnnouncedObject here - let the memory persist
+		}
+		if (describe)
+		{
+			ttsSpeaker.SpeakQueued(messageToSpeak);
+			describe = false;
 		}
 
 		// --- Update Line Renderer Visualization (Center Line) ---
@@ -262,5 +273,11 @@ public class RaycastAnnouncer : MonoBehaviour
 
 		// Draw the center line connecting the sphere centers
 		Gizmos.DrawLine(origin, endPosition);
+	}
+	private string CleanName(string originalName)
+	{
+		if (string.IsNullOrEmpty(originalName)) return "object";
+		string cleaned = nameCleaningRegex.Replace(originalName, "").Trim();
+		return string.IsNullOrEmpty(cleaned) ? "object" : cleaned;
 	}
 }

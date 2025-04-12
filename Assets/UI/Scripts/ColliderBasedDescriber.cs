@@ -41,6 +41,8 @@ public class ColliderBasedDescriber : MonoBehaviour
 	private bool _needsDescriptionUpdate = false;
 	private float _timeSinceLastChange = 0f;
 	private static readonly Regex nameCleaningRegex = new Regex(@"(\s*\(\d+\)|\d+)$", RegexOptions.Compiled);
+	public bool describe;
+	public string lastDescription;
 
 	void Awake()
 	{
@@ -92,7 +94,7 @@ public class ColliderBasedDescriber : MonoBehaviour
 		if (_needsDescriptionUpdate)
 		{
 			_timeSinceLastChange += Time.deltaTime;
-			if (_timeSinceLastChange >= descriptionUpdateDelay)
+			if ((_timeSinceLastChange >= descriptionUpdateDelay))
 			{
 				if (Time.time >= _timeOfLastDescription + descriptionCooldown)
 				{
@@ -104,8 +106,15 @@ public class ColliderBasedDescriber : MonoBehaviour
 				{
 					Debug.Log("ColliderBasedDescriber: Update delay passed, but main cooldown active.");
 				}
+				describe = false;
 				_needsDescriptionUpdate = false;
 			}
+		}
+		if (describe)
+		{
+			ttsSpeaker.SpeakQueued(lastDescription);
+			describe = false;
+			Debug.LogWarning("described");
 		}
 	}
 
@@ -132,7 +141,7 @@ public class ColliderBasedDescriber : MonoBehaviour
 
 		if (validObjects.Count == 0)
 		{
-			ttsSpeaker.SpeakQueued("Nothing significant is here.");
+			//ttsSpeaker.SpeakQueued("Nothing significant is here.");
 			Debug.Log("ColliderBasedDescriber: DescribeOverlappingObjects found no valid objects currently in trigger.");
 			return;
 		}
@@ -165,10 +174,10 @@ public class ColliderBasedDescriber : MonoBehaviour
 		// -----------------------------------------
 
 		descriptionBuilder.Append("."); // End with a period
-		string finalDescription = descriptionBuilder.ToString();
+		lastDescription = descriptionBuilder.ToString();
 
-		ttsSpeaker.SpeakQueued(finalDescription);
-		Debug.Log($"ColliderBasedDescriber: Queued TTS: {finalDescription}");
+		
+		Debug.Log($"ColliderBasedDescriber: Queued TTS: {lastDescription}");
 	}
 
 	// ---- Helper Functions ----
@@ -188,7 +197,7 @@ public class ColliderBasedDescriber : MonoBehaviour
 		return $"a {names[0]}";
 	}
 
-
+	
 	private bool IsInExcludedHierarchy(GameObject obj)
 	{
 		Transform currentTransform = obj.transform;
