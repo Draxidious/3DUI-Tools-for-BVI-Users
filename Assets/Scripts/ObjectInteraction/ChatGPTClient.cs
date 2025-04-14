@@ -3,9 +3,13 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Text;
 using Newtonsoft.Json;
+using Meta.WitAi.TTS.Utilities;
 
 public class ChatGPTClient : MonoBehaviour
 {
+    // The TTSSpeaker used to announce object names.
+    public TTSSpeaker speaker;
+
     [Header("OpenAI Settings")]
     private string openAIKey;
     public string model = "gpt-4"; // or "gpt-3.5-turbo"
@@ -15,9 +19,15 @@ public class ChatGPTClient : MonoBehaviour
         StartCoroutine(SendChatRequest(userMessage));
     }
 
+    public string ColliderPrompt()
+    {
+        return "You are a tool for a BVI user using VR in Unity. There is a collider attached to the VR rig that intersects with objects in a scene. It prints out the name of the object, as well as its x & y coordinates. It also specifies how far forward/backward and left/right items are from the user. It also groups items, so if items are directly above others, it says things like \"item 1 at y value 1.0, above it, at y value 1.1 is item 2\". This indicates that item 2 is ontop of item 1. \r\n\r\nGiven this description of objects in the scene detected by the collider, I want you to provide a general description of what the room has. The goal is to reduce cognitive load for the BVI user. There can be a lot of items, and it can be intense to have to listen to all of the coordinates of the items. You should keep the description relatively short, but it should encompass the objects in the room, and use information from the names to formulate the situation.\r\n\r\nFor example, if a room has several weapons that are ontop of a table, you should say something like \"You seem to be in a weapon room, with several objects placed on the table in front of you and a bit to your right/left\" \r\n\r\nAs another example, if there is an object that says table with a book ontop and chair, and the coordinates of the chair are near the table, you can say something like: \"There seems to be a desk for reading a book placed on a table with a nearby chair\" \r\n\r\nThe coordinates of the objects should inform your description. Nearby objects should have logical groupings. If a torch is on a wall, then you should say something like \"You seem to be in a torch-lit room.\"\r\n\r\nOnly give the description I ask of you. No other text. If some object seems to not make sense based on its name, such as 'Collider', then don't mention it. Here is the description: \n";
+    }
+
     public void Start()
     {
         openAIKey = OpenAIAPIKey.key; // Assuming you have a static class to store your API key
+        // Optionally, you can uncomment and use the AskChatGPT below:
         // AskChatGPT("Hello, ChatGPT! How are you today?");
     }
 
@@ -50,7 +60,21 @@ public class ChatGPTClient : MonoBehaviour
             {
                 Debug.Log("Response: " + request.downloadHandler.text);
                 var response = JsonConvert.DeserializeObject<ChatGPTResponse>(request.downloadHandler.text);
-                Debug.Log("ChatGPT says: " + response.choices[0].message.content);
+                string fullResponse = response.choices[0].message.content;
+
+                // Split the response into sentences using period as a delimiter.
+                string[] sentences = fullResponse.Split('.');
+
+                // Queue each sentence using TTSSpeaker.SpeakQueued
+                foreach (string sentence in sentences)
+                {
+                    string trimmedSentence = sentence.Trim();
+                    if (!string.IsNullOrEmpty(trimmedSentence))
+                    {
+                        // Append the period back for natural speech cadence.
+                        speaker.SpeakQueued(trimmedSentence + ".");
+                    }
+                }
             }
             else
             {

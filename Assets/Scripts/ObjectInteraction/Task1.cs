@@ -23,7 +23,7 @@ public class Task1 : MonoBehaviour
     private IEnumerator WaitAndSpeak()
     {
         yield return new WaitForSecondsRealtime(5);
-        speaker.SpeakQueued("Hello, welcome to the Object Interaction Task. Please pick up the key on the table, and put it in the inventory slot on your waist");
+        //speaker.SpeakQueued("Hello, welcome to the Object Interaction Task. Please pick up the key on the table, and put it in the inventory slot on your waist");
         // Add code to make the speaker speak here
     }
 

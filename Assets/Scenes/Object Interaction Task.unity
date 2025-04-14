@@ -2413,6 +2413,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd62125a35ea0e94ba5e83226ce39132, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  speaker: {fileID: 281195517}
   model: gpt-4
 --- !u!4 &599248484
 Transform:
@@ -3994,6 +3995,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13131d784e5817b428376e68e06e198d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  speaker: {fileID: 281195517}
+  chatGPTClient: {fileID: 599248483}
   forwardCollider: {fileID: 1192654040}
   backCollider: {fileID: 1846986938}
   leftCollider: {fileID: 211898868}

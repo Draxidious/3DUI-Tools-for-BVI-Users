@@ -1,8 +1,13 @@
+using Meta.WitAi.TTS.Interfaces;
+using Meta.WitAi.TTS.Utilities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class BVIColliderManager : MonoBehaviour
 {
+    public TTSSpeaker speaker;
+    public ChatGPTClient chatGPTClient;
+
     // References to the four BVICollider instances.
     public BVICollider forwardCollider;
     public BVICollider backCollider;
@@ -16,7 +21,8 @@ public class BVIColliderManager : MonoBehaviour
         {
             if (forwardCollider != null)
             {
-                forwardCollider.AnnounceObjects(true, true, true, true);
+                speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently in front of you");
+                chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + forwardCollider.AnnounceObjects(true, true, true, true));
             }
         }
 
@@ -25,7 +31,8 @@ public class BVIColliderManager : MonoBehaviour
         {
             if (backCollider != null)
             {
-                backCollider.AnnounceObjects(true, true, true, true);
+                speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently behind you");
+                chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + backCollider.AnnounceObjects(true, true, true, true));
             }
         }
 
@@ -34,7 +41,8 @@ public class BVIColliderManager : MonoBehaviour
         {
             if (leftCollider != null)
             {
-                leftCollider.AnnounceObjects(true, true, true, true);
+                speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently to your left");
+                chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + leftCollider.AnnounceObjects(true, true, true, true));
             }
         }
 
@@ -43,7 +51,8 @@ public class BVIColliderManager : MonoBehaviour
         {
             if (rightCollider != null)
             {
-                rightCollider.AnnounceObjects(true, true, true, true);
+                speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently to your right");
+                chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + rightCollider.AnnounceObjects(true, true, true, true));
             }
         }
     }
