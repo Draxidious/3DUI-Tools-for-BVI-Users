@@ -14,46 +14,79 @@ public class BVIColliderManager : MonoBehaviour
     public BVICollider leftCollider;
     public BVICollider rightCollider;
 
+    // Reference to the camera whose forward vector we want to match
+    public Camera referenceCamera;
+
     private void Update()
     {
+        // Match forward vector with the camera
+        if (referenceCamera != null)
+        {
+            Vector3 cameraForward = referenceCamera.transform.forward;
+            cameraForward.y = 0; // Optional: ignore vertical tilt
+            if (cameraForward != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(cameraForward);
+            }
+        }
         // If the up arrow is pressed, trigger the forward collider announcement.
         if (Keyboard.current.upArrowKey.wasPressedThisFrame)
         {
-            if (forwardCollider != null)
-            {
-                speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently in front of you");
-                chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + forwardCollider.AnnounceObjects(true, true, true, true));
-            }
+            AnnounceForwardDescription();
         }
 
         // If the down arrow is pressed, trigger the back collider announcement.
         if (Keyboard.current.downArrowKey.wasPressedThisFrame)
         {
-            if (backCollider != null)
-            {
-                speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently behind you");
-                chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + backCollider.AnnounceObjects(true, true, true, true));
-            }
+            AnnounceBackwardDescription();
         }
 
         // If the left arrow is pressed, trigger the left collider announcement.
         if (Keyboard.current.leftArrowKey.wasPressedThisFrame)
         {
-            if (leftCollider != null)
-            {
-                speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently to your left");
-                chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + leftCollider.AnnounceObjects(true, true, true, true));
-            }
+            AnnounceLeftDescription();
         }
 
         // If the right arrow is pressed, trigger the right collider announcement.
         if (Keyboard.current.rightArrowKey.wasPressedThisFrame)
         {
-            if (rightCollider != null)
-            {
-                speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently to your right");
-                chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + rightCollider.AnnounceObjects(true, true, true, true));
-            }
+            AnnounceRightDescription();
+        }
+    }
+
+    public void AnnounceForwardDescription()
+    {
+        if (forwardCollider != null)
+        {
+            speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently in front of you");
+            chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + forwardCollider.AnnounceObjects(true, true, true, true));
+        }
+    }
+
+    public void AnnounceBackwardDescription()
+    {
+        if (backCollider != null)
+        {
+            speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently behind you");
+            chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + backCollider.AnnounceObjects(true, true, true, true));
+        }
+    }
+
+    public void AnnounceLeftDescription()
+    {
+        if (leftCollider != null)
+        {
+            speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently to your left");
+            chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + leftCollider.AnnounceObjects(true, true, true, true));
+        }
+    }
+
+    public void AnnounceRightDescription()
+    {
+        if (rightCollider != null)
+        {
+            speaker.SpeakQueued("Please wait as I now try to get a feel for what's currently to your right");
+            chatGPTClient.AskChatGPT(chatGPTClient.ColliderPrompt() + rightCollider.AnnounceObjects(true, true, true, true));
         }
     }
 }
