@@ -27,8 +27,10 @@ public class DescriptionMode : MonoBehaviour
 
 	public void describe()
 	{
+		Debug.LogWarning("describe triggered");
 		if(ray.gameObject.activeSelf)
 		{
+			
 			ray.describe = true;
 		}
 		if (flashlight.gameObject.activeSelf)
@@ -36,4 +38,5 @@ public class DescriptionMode : MonoBehaviour
 			flashlight.describe = true;
 		}
 	}
+
 }

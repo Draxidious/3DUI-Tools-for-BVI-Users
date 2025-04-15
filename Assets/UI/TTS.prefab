@@ -21,7 +21,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &650588966469055984
 Transform:
   m_ObjectHideFlags: 0
@@ -389,7 +389,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7218696924274535921}
-  - component: {fileID: 7101256225343233514}
+  - component: {fileID: 2246297825114506176}
+  - component: {fileID: 8520944032712556052}
+  - component: {fileID: 5773592482204648133}
   m_Layer: 0
   m_Name: TTS
   m_TagString: Untagged
@@ -416,103 +418,136 @@ Transform:
   - {fileID: 2449315379370522653}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
---- !u!82 &7101256225343233514
-AudioSource:
+--- !u!114 &2246297825114506176
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2848290061727082589}
   m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: bb6f82b4e7ac95348884e6ddeb6ad408, type: 3}
-  m_PlayOnAwake: 1
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b71a21fcbdcde94787deb4a8e624d5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  appVoiceExperience: {fileID: 3240817338352043586}
+  parameterizedWordActions:
+  - triggerWord: Grab
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 5773592482204648133}
+          m_TargetAssemblyTypeName: VoiceGrabController, Assembly-CSharp
+          m_MethodName: GrabObjectByName
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: Drop
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 5773592482204648133}
+          m_TargetAssemblyTypeName: VoiceGrabController, Assembly-CSharp
+          m_MethodName: DropItem
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  simpleWordActions:
+  - triggerWord: describe
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8520944032712556052}
+          m_TargetAssemblyTypeName: DescriptionMode, Assembly-CSharp
+          m_MethodName: describe
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: flashlight
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8520944032712556052}
+          m_TargetAssemblyTypeName: DescriptionMode, Assembly-CSharp
+          m_MethodName: flashlightOn
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: ray
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 8520944032712556052}
+          m_TargetAssemblyTypeName: DescriptionMode, Assembly-CSharp
+          m_MethodName: raycastOn
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  ignoreCase: 1
+  reactivationDelay: 0.5
+--- !u!114 &8520944032712556052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2848290061727082589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aee6edc4b6afb914e9d5e501ad40f2ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ray: {fileID: 8295057921311927996}
+  flashlight: {fileID: 6931212799899161631}
+--- !u!114 &5773592482204648133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2848290061727082589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ff2f548af03f4eac333b78823fe2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leftHandController: {fileID: 0}
+  rightHandController: {fileID: 0}
+  grabbableLayer:
     serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+    m_Bits: 0
+  maxGrabDistance: 1
+  ttsSpeaker: {fileID: 1347583433727291527}
 --- !u!1 &4936442140361657467
 GameObject:
   m_ObjectHideFlags: 0
@@ -672,7 +707,7 @@ MonoBehaviour:
   PrependedText: 
   AppendedText: 
   _ttsService: {fileID: 4537692291230763667}
-  presetVoiceID: 
+  presetVoiceID: WIT$SURFER
   customWitVoiceSettings:
     SettingsId: 
     PrependedText: 
@@ -784,6 +819,13 @@ MonoBehaviour:
     PrependedText: 
     AppendedText: 
     voice: wit$Cartoon Villain
+    style: default
+    speed: 100
+    pitch: 100
+  - SettingsId: WIT$BRITISH BUTLER
+    PrependedText: 
+    AppendedText: 
+    voice: wit$British Butler
     style: default
     speed: 100
     pitch: 100
@@ -1069,7 +1111,7 @@ MonoBehaviour:
     minKeepAliveVolume: 0.0005
     minKeepAliveTimeInSeconds: 2
     minTranscriptionKeepAliveTimeInSeconds: 1
-    maxRecordingTime: 20
+    maxRecordingTime: 5
     soundWakeThreshold: 0.0005
     sampleLengthInMs: 10
     micBufferLengthInSeconds: 1
@@ -1266,5 +1308,5 @@ MonoBehaviour:
   onTopVerticalTolerance: 0.1
   descriptionCooldown: 3
   descriptionUpdateDelay: 0.2
-  on: 0
   describe: 0
+  lastDescription: 

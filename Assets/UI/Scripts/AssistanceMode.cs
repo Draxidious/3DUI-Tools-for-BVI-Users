@@ -1,40 +1,66 @@
 using UnityEngine;
 using Oculus.Voice;       // Namespace for AppVoiceExperience
-using UnityEngine.Events; // For UnityEvents
+using UnityEngine.Events; // Required for UnityEvent<T>
 using System;             // For StringComparison
 using System.Collections; // Required for Coroutines
 using System.Collections.Generic; // To use List<>
 
-// Define a helper class to pair a trigger word with a UnityEvent
-// This makes it easy to configure in the Inspector
+// --- Structures for Command Configuration ---
+
+// For simple commands WITHOUT parameters
 [System.Serializable]
-public class WordActionPair
+public class SimpleWordActionPair
 {
-	[Tooltip("The specific word that should trigger the associated action.")]
+	[Tooltip("The specific word/phrase that acts as the command trigger (no parameter expected).")]
 	public string triggerWord;
-	[Tooltip("The UnityEvent(s) to invoke when the trigger word is detected.")]
-	public UnityEvent actionToTrigger;
+
+	[Tooltip("The UnityEvent(s) to invoke when ONLY the trigger word is detected.")]
+	public UnityEvent actionToTrigger; // Parameter-less event
 }
 
-// AssistanceMode script modified to attempt continuous listening with delayed reactivation
+// For commands WITH parameters
+[System.Serializable]
+public class ParameterizedWordActionPair
+{
+	[Tooltip("The specific word/phrase that acts as the command trigger (parameter expected).")]
+	public string triggerWord;
+
+	[Tooltip("The UnityEvent(s) to invoke when the trigger word is detected FOLLOWED BY a parameter. The parameter string will be passed.")]
+	public UnityEvent<string> actionToTrigger; // Event with string parameter
+}
+
+
+// --- Main Script ---
+
+// AssistanceMode script modified to handle both simple and parameterized commands
 public class AssistanceMode : MonoBehaviour
 {
 	[Tooltip("Reference to the AppVoiceExperience component in your scene.")]
 	[SerializeField] private AppVoiceExperience appVoiceExperience;
 
 	[Space]
-	[Tooltip("List of trigger words and the actions they trigger.")]
-	[SerializeField] private List<WordActionPair> wordActions = new List<WordActionPair>();
+	[Header("Command Configuration")]
 
+	[Tooltip("Commands that expect a parameter (e.g., 'grab item', 'go location').")]
+	[SerializeField] private List<ParameterizedWordActionPair> parameterizedWordActions = new List<ParameterizedWordActionPair>();
+
+	[Tooltip("Simple commands that do not expect a parameter (e.g., 'show help', 'status').")]
+	[SerializeField] private List<SimpleWordActionPair> simpleWordActions = new List<SimpleWordActionPair>();
+
+
+	[Space]
+	[Header("Settings")]
 	[Tooltip("Make the word matching case-insensitive?")]
 	[SerializeField] private bool ignoreCase = true;
 
 	[Tooltip("Delay in seconds before reactivating dictation after it ends.")]
 	[SerializeField] private float reactivationDelay = 0.5f; // Adjust as needed
 
-	// Flag to prevent potential rapid reactivation loops if needed
+	// --- Private State ---
 	private bool isActivating = false;
 	private Coroutine reactivationCoroutine = null; // Keep track of the coroutine
+
+	// --- Unity Methods ---
 
 	void Start()
 	{
@@ -45,16 +71,18 @@ public class AssistanceMode : MonoBehaviour
 			return;
 		}
 
-		if (wordActions == null || wordActions.Count == 0)
+		// Log warnings if lists are empty
+		if ((parameterizedWordActions == null || parameterizedWordActions.Count == 0) &&
+			(simpleWordActions == null || simpleWordActions.Count == 0))
 		{
-			Debug.LogWarning("AssistanceMode: No trigger words have been configured in the 'Word Actions' list.", this);
+			Debug.LogWarning("AssistanceMode: No commands have been configured in either list.", this);
 		}
 
 		// Subscribe to transcription events
 		appVoiceExperience.VoiceEvents.OnFullTranscription.AddListener(HandleTranscription);
 		appVoiceExperience.VoiceEvents.OnRequestCompleted.AddListener(HandleDictationEnded);
 
-		Debug.Log($"AssistanceMode initialized. Listening for {wordActions.Count} trigger word(s).");
+		Debug.Log($"AssistanceMode initialized. Listening for {parameterizedWordActions.Count} parameterized and {simpleWordActions.Count} simple command(s).");
 
 		// Automatically activate dictation when the script starts
 		ActivateDictationService();
@@ -83,148 +111,174 @@ public class AssistanceMode : MonoBehaviour
 		}
 	}
 
-	// Handles the transcription result
+	// --- Transcription Handling ---
+
 	private void HandleTranscription(string transcript)
 	{
-		if (string.IsNullOrEmpty(transcript) || wordActions == null || wordActions.Count == 0)
-		{
-			return; // Ignore empty results or if no actions are configured
-		}
+		if (string.IsNullOrEmpty(transcript)) return;
 
 		Debug.Log($"Transcription received: '{transcript}'");
-
 		StringComparison comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-		bool wordFound = false;
+		bool commandRecognized = false;
 
-		// Iterate through each configured word-action pair
-		foreach (WordActionPair pair in wordActions)
+		// 1. Check for Parameterized Commands FIRST
+		if (parameterizedWordActions != null)
 		{
-			// Skip if the trigger word in the pair is empty or null
-			if (string.IsNullOrEmpty(pair.triggerWord))
+			foreach (ParameterizedWordActionPair pair in parameterizedWordActions)
 			{
-				continue;
-			}
+				if (string.IsNullOrEmpty(pair.triggerWord)) continue;
 
-			// Check if the transcript contains the current trigger word
-			if (transcript.IndexOf(pair.triggerWord, comparison) >= 0)
-			{
-				Debug.Log($"Target word '{pair.triggerWord}' DETECTED in transcript!");
-				wordFound = true;
-
-				// Invoke the specific UnityEvent associated with this word
-				pair.actionToTrigger?.Invoke();
-
-				// Note: This current logic will trigger actions for *all* matching words found
-				// in a single transcript. If you only want the *first* match to trigger,
-				// you could add 'break;' here after the Invoke().
-			}
+				int index = transcript.IndexOf(pair.triggerWord, comparison);
+				if (index >= 0)
+				{
+					bool isStartOfWord = (index == 0) || (index > 0 && char.IsWhiteSpace(transcript[index - 1]));
+					if (isStartOfWord)
+					{
+						int parameterStartIndex = index + pair.triggerWord.Length;
+						if (parameterStartIndex < transcript.Length)
+						{
+							string parameter = transcript.Substring(parameterStartIndex).Trim();
+							if (!string.IsNullOrWhiteSpace(parameter))
+							{
+								Debug.Log($"Parameterized command '{pair.triggerWord}' DETECTED with parameter: '{parameter}'");
+								pair.actionToTrigger?.Invoke(parameter);
+								commandRecognized = true;
+								// Optional: break; // Uncomment if finding one parameterized command should stop checking others
+							}
+						}
+					}
+				}
+			} // End foreach parameterized
 		}
 
-		if (!wordFound)
+		// 2. Check for Simple Commands if no parameterized command was already recognized
+		//    (Or remove this 'if' if simple commands can trigger alongside parameterized ones)
+		if (!commandRecognized && simpleWordActions != null)
 		{
-			Debug.Log($"No configured trigger words found in the transcript.");
+			foreach (SimpleWordActionPair pair in simpleWordActions)
+			{
+				if (string.IsNullOrEmpty(pair.triggerWord)) continue;
+
+				int index = transcript.IndexOf(pair.triggerWord, comparison);
+				if (index >= 0)
+				{
+					bool isStartOfWord = (index == 0) || (index > 0 && char.IsWhiteSpace(transcript[index - 1]));
+					if (isStartOfWord)
+					{
+						// Check if nothing (or only whitespace) follows the trigger word
+						int endOfTriggerIndex = index + pair.triggerWord.Length;
+						bool nothingFollows = endOfTriggerIndex >= transcript.Length;
+						bool onlyWhitespaceFollows = !nothingFollows && string.IsNullOrWhiteSpace(transcript.Substring(endOfTriggerIndex));
+
+						if (nothingFollows || onlyWhitespaceFollows)
+						{
+							Debug.Log($"Simple command '{pair.triggerWord}' DETECTED.");
+							pair.actionToTrigger?.Invoke();
+							commandRecognized = true;
+							// Optional: break; // Uncomment if finding one simple command should stop checking others
+						}
+					}
+				}
+			} // End foreach simple
+		}
+
+
+		if (!commandRecognized)
+		{
+			Debug.Log($"No configured commands recognized in the transcript.");
 		}
 	}
 
-	// --- Example function that could be linked to a UnityEvent ---
-	public void ExampleAction_ActivateHelp()
+	// --- Example Action Methods ---
+
+	// Example for Parameterized Command List
+	public void Example_GrabItem(string item)
 	{
-		// Check if the GameObject this script component is attached to is active in the hierarchy
-		if (!this.gameObject.activeSelf)
-		{
-			Debug.Log($"ExampleAction_ActivateHelp called on inactive GameObject '{this.gameObject.name}'. Skipping action.");
-			return; // Stop execution if the GameObject is not active
-		}
-		Debug.LogWarning("ASSISTANCE MODE: ExampleAction_ActivateHelp() HAS BEEN TRIGGERED!");
-		GameObject helpPanel = GameObject.Find("HelpPanel"); // Example: Find a UI panel
-		if (helpPanel != null)
-		{
-			helpPanel.SetActive(!helpPanel.activeSelf); // Toggle visibility
-		}
+		if (!this.gameObject.activeSelf) return;
+		Debug.LogWarning($"ASSISTANCE MODE: Example_GrabItem TRIGGERED with item: '{item}'");
+		// Add logic to grab the specified item...
 	}
 
-	public void ExampleAction_ChangeColor()
+	// Example for Parameterized Command List
+	public void Example_ChangeColor(string colorName)
 	{
-		// Check if the GameObject this script component is attached to is active in the hierarchy
-		if (!this.gameObject.activeSelf)
-		{
-			Debug.Log($"ExampleAction_ChangeColor called on inactive GameObject '{this.gameObject.name}'. Skipping action.");
-			return; // Stop execution if the GameObject is not active
-		}
-		Debug.LogWarning("ASSISTANCE MODE: ExampleAction_ChangeColor() HAS BEEN TRIGGERED!");
-		GameObject cube = GameObject.Find("MyCube"); // Example: Find a cube
+		if (!this.gameObject.activeSelf) return;
+		Debug.LogWarning($"ASSISTANCE MODE: Example_ChangeColor TRIGGERED with color: '{colorName}'");
+		GameObject cube = GameObject.Find("MyCube");
 		if (cube != null)
 		{
 			Renderer rend = cube.GetComponent<Renderer>();
 			if (rend != null)
 			{
-				rend.material.color = UnityEngine.Random.ColorHSV();
+				Color targetColor = Color.white; // Default
+				switch (colorName.ToLowerInvariant())
+				{
+					case "red": targetColor = Color.red; break;
+					case "blue": targetColor = Color.blue; break;
+					case "green": targetColor = Color.green; break;
+					default: Debug.LogWarning($"Color parameter '{colorName}' not recognized."); break;
+				}
+				rend.material.color = targetColor;
 			}
 		}
 	}
 
-	// --- Event Handler for Dictation Ending ---
+	// Example for Simple Command List
+	public void Example_ShowHelp()
+	{
+		if (!this.gameObject.activeSelf) return;
+		Debug.LogWarning($"ASSISTANCE MODE: Example_ShowHelp TRIGGERED (no parameters).");
+		GameObject helpPanel = GameObject.Find("HelpPanel");
+		if (helpPanel != null)
+		{
+			helpPanel.SetActive(!helpPanel.activeSelf);
+		}
+	}
+
+	// Example for Simple Command List
+	public void Example_ReportStatus()
+	{
+		if (!this.gameObject.activeSelf) return;
+		Debug.LogWarning($"ASSISTANCE MODE: Example_ReportStatus TRIGGERED (no parameters).");
+		// Add logic to report status...
+	}
+
+
+	// --- Dictation Activation/Reactivation Logic ---
+
 	private void HandleDictationEnded()
 	{
-		Debug.Log("Dictation request ended (completed/timeout). Scheduling reactivation...");
-		// Reset activation flag immediately, as we are now handling the completion.
+		Debug.Log("Dictation request ended. Scheduling reactivation...");
 		isActivating = false;
-
-		// Stop any previous reactivation coroutine if it was somehow still running
-		if (reactivationCoroutine != null)
-		{
-			StopCoroutine(reactivationCoroutine);
-		}
-
-		// Start the coroutine to reactivate after a delay
+		if (reactivationCoroutine != null) StopCoroutine(reactivationCoroutine);
 		reactivationCoroutine = StartCoroutine(ReactivateAfterDelay());
 	}
 
-	// --- Coroutine to reactivate after a delay ---
 	private IEnumerator ReactivateAfterDelay()
 	{
 		Debug.Log($"Waiting for {reactivationDelay} seconds before reactivating...");
 		yield return new WaitForSeconds(reactivationDelay);
-
 		Debug.Log("Delay finished. Attempting reactivation.");
-		reactivationCoroutine = null; // Clear the coroutine reference
-		ActivateDictationService(); // Attempt to activate again
+		reactivationCoroutine = null;
+		ActivateDictationService();
 	}
 
-
-	// --- Central method to activate dictation ---
 	private void ActivateDictationService()
 	{
-		// Add more detailed logging here
 		Debug.Log($"Attempting ActivateDictationService. Is AppVoiceExperience null? {appVoiceExperience == null}. Is Active? {appVoiceExperience?.Active}. Is Activating flag set? {isActivating}");
-
-		// Check if AppVoiceExperience is assigned and not already active or activating
 		if (appVoiceExperience != null && !appVoiceExperience.Active && !isActivating)
 		{
 			Debug.Log("Activating dictation service...");
-			isActivating = true; // Set flag to prevent immediate reactivation attempts
+			isActivating = true;
 			appVoiceExperience.Activate();
 			Debug.Log("appVoiceExperience.Activate() called.");
-			// Note: isActivating flag will be reset when HandleDictationEnded is called next time.
 		}
-		else if (appVoiceExperience == null)
-		{
-			Debug.LogError("Cannot activate dictation, AppVoiceExperience is not assigned in AssistanceMode.");
-		}
-		else if (appVoiceExperience.Active)
-		{
-			Debug.Log("Dictation service is already active. No need to activate.");
-			// It was already active, so ensure isActivating is false in case state was inconsistent.
-			isActivating = false;
-		}
-		else if (isActivating)
-		{
-			Debug.Log("Dictation service is already in the process of activating (isActivating flag is true). Waiting for completion.");
-		}
+		else if (appVoiceExperience == null) { Debug.LogError("Cannot activate dictation, AppVoiceExperience is not assigned."); }
+		else if (appVoiceExperience.Active) { Debug.Log("Dictation service already active."); isActivating = false; }
+		else if (isActivating) { Debug.Log("Dictation service already activating."); }
 	}
 
-	// --- Public method retained for potential manual activation (e.g., via button) ---
-	public void ManualStartDictation()
+	public void ManualStartDictation() // Retained for manual triggering if needed
 	{
 		ActivateDictationService();
 	}

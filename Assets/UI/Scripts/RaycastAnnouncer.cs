@@ -204,6 +204,7 @@ public class RaycastAnnouncer : MonoBehaviour
 		}
 		if (describe)
 		{
+			Debug.LogWarning("ray describe logic triggered");
 			ttsSpeaker.SpeakQueued(messageToSpeak);
 			describe = false;
 		}
