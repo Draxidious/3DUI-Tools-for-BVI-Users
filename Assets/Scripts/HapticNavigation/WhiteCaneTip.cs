@@ -4,6 +4,7 @@ using UnityEngine.XR;
 
 public class WhiteCaneTip : MonoBehaviour
 {
+    public AudioSource stickhit;
     private InputDevice rightHand;
 
     void Start()
@@ -23,6 +24,7 @@ public class WhiteCaneTip : MonoBehaviour
         if (rightHand.isValid)
         {
             rightHand.SendHapticImpulse(0u, 0.7f, 0.1f);
+            stickhit.Play();
             Debug.Log("Cane touched: " + other.gameObject.name);
         }
     }

@@ -10,8 +10,8 @@ public class HapticNavigator : MonoBehaviour
     private InputDevice leftController;
     private InputDevice rightController;
 
-    public float guidanceAngleThreshold = 15f;
-    public float maxVibrationDistance = 8f;
+    public float maxVibrationAngle = 180f;
+    public float vibrationStrength = 0.5f;
 
     public void SetTarget(Transform newTarget)
     {
@@ -26,28 +26,40 @@ public class HapticNavigator : MonoBehaviour
 
         Vector3 toTarget = targetPoint.position - player.position;
         toTarget.y = 0;
-        float distance = toTarget.magnitude;
+        toTarget.Normalize();
 
         Vector3 forward = player.forward;
         forward.y = 0;
+        forward.Normalize();
 
-        float angle = Vector3.SignedAngle(forward, toTarget, Vector3.up);
+        float angle = Vector3.SignedAngle(forward, toTarget, Vector3.up); // Left  Right 
 
-        if (angle > guidanceAngleThreshold)
-            SendHaptic(rightController, 0.4f, 0.1f);
-        else if (angle < -guidanceAngleThreshold)
-            SendHaptic(leftController, 0.4f, 0.1f);
+        float absAngle = Mathf.Abs(angle);
+        float intensity = Mathf.Clamp01(absAngle / maxVibrationAngle) * vibrationStrength;
+
+        if (Mathf.Abs(angle) < 5f)
+        {
+            // Facing correct direction no vibration
+            SendHaptic(leftController, 0f, 0.05f);
+            SendHaptic(rightController, 0f, 0.05f);
+        }
+        else if (angle > 0)
+        {
+            // Turning right right vibrates, left fades out
+            SendHaptic(rightController, intensity, 0.1f);
+            SendHaptic(leftController, 0f, 0.05f);
+        }
         else
         {
-            float intensity = Mathf.Clamp01(1f - (distance / maxVibrationDistance));
+            // Turning left left vibrates, right fades out
             SendHaptic(leftController, intensity, 0.1f);
-            SendHaptic(rightController, intensity, 0.1f);
+            SendHaptic(rightController, 0f, 0.05f);
         }
     }
 
     private void SendHaptic(InputDevice device, float amplitude, float duration)
     {
-        if (device.isValid)
+        if (device.isValid && amplitude > 0f)
         {
             device.SendHapticImpulse(0u, amplitude, duration);
         }

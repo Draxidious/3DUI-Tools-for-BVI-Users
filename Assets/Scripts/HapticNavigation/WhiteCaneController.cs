@@ -19,24 +19,25 @@ public class WhiteCaneController : MonoBehaviour
 
     void Start()
     {
-        toggleCaneAction = new InputAction(
-            type: InputActionType.Button,
-            binding: "<XRController>{RightHand}/secondaryButton"
-        );
-        toggleCaneAction.Enable();
+        //toggleCaneAction = new InputAction(
+        //    type: InputActionType.Button,
+        //    binding: "<XRController>{RightHand}/secondaryButton"
+        //);
+        //toggleCaneAction.Enable();
 
         TryGetRightController();
+
     }
 
     void Update()
     {
-        if (toggleCaneAction.WasPressedThisFrame())
-        {
-            if (activeCane == null)
-                SpawnCane();
-            else
-                RemoveCane();
-        }
+        //if (toggleCaneAction.WasPressedThisFrame())
+        //{
+        //    if (activeCane == null)
+        //        SpawnCane();
+        //    else
+        //        RemoveCane();
+        //}
     }
 
     private void SpawnCane()
@@ -93,5 +94,22 @@ public class WhiteCaneController : MonoBehaviour
     private void OnDestroy()
     {
         toggleCaneAction?.Disable();
+    }
+
+    public void ToggleCane(bool enable)
+    {
+        if (enable && activeCane == null)
+        {
+            SpawnCane();
+        }
+        else if (!enable && activeCane != null)
+        {
+            RemoveCane();
+        }
+    }
+
+    public bool IsCaneActive()
+    {
+        return activeCane != null;
     }
 }

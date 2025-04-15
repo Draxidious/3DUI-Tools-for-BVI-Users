@@ -1,3 +1,4 @@
+using Meta.WitAi.TTS.Utilities;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,7 +6,9 @@ using UnityEngine.XR;
 
 public class NavigationTaskManager : MonoBehaviour
 {
-    public OfflineTTS tts;
+
+    public TTSSpeaker speaker;
+    //public OfflineTTS tts;
     public AudioSource arrivalSound;
     public Transform pointB;
     public Transform pointC;
@@ -32,8 +35,10 @@ public class NavigationTaskManager : MonoBehaviour
 
     private IEnumerator WelcomeMessage()
     {
-        yield return new WaitForSeconds(2f);
-        tts.Speak("Welcome to the navigation task. You are at point A. Move to points B, C, and D.");
+        yield return new WaitForSecondsRealtime(5);
+        speaker.SpeakQueued("Welcome to the navigation task. You are currenty standing at point A. " +
+            "" +
+            "Next you will Move to points B, then to C, and finally to D which is your goal.");
     }
 
     public void OnPointReached(string pointID)
@@ -57,7 +62,7 @@ public class NavigationTaskManager : MonoBehaviour
             pointsReached[index] = true;
             if (pointID == "B"| pointID == "C" | pointID == "D")
             {
-                tts.Speak($"You have reached point {pointID}");
+                speaker.SpeakQueued($"You have reached point {pointID}");
                 arrivalSound.Play();
             }
             
@@ -77,7 +82,9 @@ public class NavigationTaskManager : MonoBehaviour
 
         if (AllPointsReached())
         {
-            tts.Speak("Great work! You have reached all points.");
+            //yield return new WaitForSeconds(2f);
+            new WaitForSecondsRealtime(2);
+            speaker.SpeakQueued("Great work! You have reached all points.");
             SendHaptic(leftController, 1f, 0.3f);
             SendHaptic(rightController, 1f, 0.3f);
         }
