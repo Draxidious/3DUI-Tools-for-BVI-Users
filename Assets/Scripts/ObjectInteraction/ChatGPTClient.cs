@@ -21,7 +21,27 @@ public class ChatGPTClient : MonoBehaviour
 
     public string ColliderPrompt()
     {
-        return "You are a tool for a BVI user using VR in Unity. There is a collider attached to the VR rig that intersects with objects in a scene. It prints out the name of the object, as well as its x & y coordinates. It also specifies how far forward/backward and left/right items are from the user. It also groups items, so if items are directly above others, it says things like \"item 1 at y value 1.0, above it, at y value 1.1 is item 2\". This indicates that item 2 is ontop of item 1. \r\n\r\nGiven this description of objects in the scene detected by the collider, I want you to provide a general description of what the room has. The goal is to reduce cognitive load for the BVI user. There can be a lot of items, and it can be intense to have to listen to all of the coordinates of the items. You should keep the description relatively short, but it should encompass the objects in the room, and use information from the names to formulate the situation.\r\n\r\nFor example, if a room has several weapons that are ontop of a table, you should say something like \"You seem to be in a weapon room, with several objects placed on the table in front of you and a bit to your right/left\" \r\n\r\nAs another example, if there is an object that says table with a book ontop and chair, and the coordinates of the chair are near the table, you can say something like: \"There seems to be a desk for reading a book placed on a table with a nearby chair\" \r\n\r\nThe coordinates of the objects should inform your description. Nearby objects should have logical groupings. If a torch is on a wall, then you should say something like \"You seem to be in a torch-lit room.\"\r\n\r\nOnly give the description I ask of you. No other text. If some object seems to not make sense based on its name, such as 'Collider', then don't mention it. If you are given less than 3 items, simply list them and their coordinates. If you recieve no items, DO NOT make things up. Just say the following sentence word for word: Sorry looks like there isn't anything in front of you. Now, here is the description: \n";
+        return "You are a tool for a BVI user using VR in Unity. There is a collider attached to the VR rig that intersects with objects in a scene." +
+            " It prints out the name of the object, as well as its x & y coordinates. " +
+            "It also specifies how far forward/backward and left/right items are from the user. " +
+            "It also groups items, so if items are directly above others, it says things like \"item 1 at y value 1.0, above it, " +
+            "at y value 1.1 is item 2\". This indicates that item 2 is ontop of item 1. \r\n\r\n" +
+            "Given this description of objects in the scene detected by the collider, " +
+            "I want you to provide a general description of what the room has. The goal is to reduce cognitive load for the BVI user. " +
+            "There can be a lot of items, and it can be intense to have to listen to all of the coordinates of the items. " +
+            "You should keep the description relatively short, but it should encompass the objects in the room, and use information from " +
+            "the names to formulate the situation.\r\n\r\n" +
+            "For example, if a room has several weapons that are ontop of a table, you should say something like " +
+            "\"You seem to be in a weapon room, with several objects placed on the table in front of you and a bit to your right/left\" " +
+            "\r\n\r\nAs another example, if there is an object that says table with a book ontop and chair, " +
+            "and the coordinates of the chair are near the table, you can say something like: \"There seems to be a desk for reading a book " +
+            "placed on a table with a nearby chair\" \r\n\r\nThe coordinates of the objects should inform your description. Nearby objects should have " +
+            "logical groupings. If a torch is on a wall, then you should say something like \"You seem to be in a torch-lit room.\"\r\n\r\n" +
+            "Only give the description I ask of you. No other text. If some object seems to not make sense based on its name, such as 'Collider', " +
+            "then don't mention it. If you are given less than 3 items, simply list them and their coordinates. If you recieve no items, " +
+            "DO NOT make things up. Just say the following sentence word for word: Sorry looks like there isn't anything in front of you. " +
+            "If you are given planes that seem to be a floor, just mention that the floor is flat, don't mention multiple planes or their locations." +
+            "Now, here is the description: \n";
     }
 
     public void Start()
