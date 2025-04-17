@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ImmersiveDebuggerSettings
   m_EditorClassIdentifier: 
   debugTypes: []
-  immersiveDebuggerEnabled: 1
+  immersiveDebuggerEnabled: 0
   immersiveDebuggerDisplayAtStartup: 0
   showInspectors: 0
   showConsole: 0

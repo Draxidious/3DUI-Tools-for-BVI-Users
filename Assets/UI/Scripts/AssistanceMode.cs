@@ -1,7 +1,7 @@
 using UnityEngine;
 using Oculus.Voice;       // Namespace for AppVoiceExperience
 using UnityEngine.Events; // Required for UnityEvent<T>
-using System;             // For StringComparison
+using System;             // For StringComparison, NonSerialized
 using System.Collections; // Required for Coroutines
 using System.Collections.Generic; // To use List<>
 
@@ -16,6 +16,9 @@ public class SimpleWordActionPair
 
 	[Tooltip("The UnityEvent(s) to invoke when ONLY the trigger word is detected.")]
 	public UnityEvent actionToTrigger; // Parameter-less event
+
+	// Timestamp for per-command cooldown - Do not save/load this value
+	[System.NonSerialized] public float lastExecutionTime = -100f;
 }
 
 // For commands WITH parameters
@@ -27,12 +30,15 @@ public class ParameterizedWordActionPair
 
 	[Tooltip("The UnityEvent(s) to invoke when the trigger word is detected FOLLOWED BY a parameter. The parameter string will be passed.")]
 	public UnityEvent<string> actionToTrigger; // Event with string parameter
+
+	// Timestamp for per-command cooldown - Do not save/load this value
+	[System.NonSerialized] public float lastExecutionTime = -100f;
 }
 
 
 // --- Main Script ---
 
-// AssistanceMode script modified to handle both simple and parameterized commands
+// AssistanceMode script modified to handle per-command cooldowns
 public class AssistanceMode : MonoBehaviour
 {
 	[Tooltip("Reference to the AppVoiceExperience component in your scene.")]
@@ -54,11 +60,15 @@ public class AssistanceMode : MonoBehaviour
 	[SerializeField] private bool ignoreCase = true;
 
 	[Tooltip("Delay in seconds before reactivating dictation after it ends.")]
-	[SerializeField] private float reactivationDelay = 0.5f; // Adjust as needed
+	[SerializeField] private float reactivationDelay = 0.5f;
+
+	[Tooltip("Cooldown time in seconds before the *same* command can be triggered again.")]
+	[SerializeField] private float commandCooldownDuration = 5.0f; // Default to 5 seconds
+
 
 	// --- Private State ---
 	private bool isActivating = false;
-	private Coroutine reactivationCoroutine = null; // Keep track of the coroutine
+	private Coroutine reactivationCoroutine = null;
 
 	// --- Unity Methods ---
 
@@ -67,49 +77,58 @@ public class AssistanceMode : MonoBehaviour
 		if (appVoiceExperience == null)
 		{
 			Debug.LogError("AppVoiceExperience reference is not set in AssistanceMode script!", this);
-			enabled = false; // Disable script if component not found
+			enabled = false;
 			return;
 		}
 
-		// Log warnings if lists are empty
 		if ((parameterizedWordActions == null || parameterizedWordActions.Count == 0) &&
 			(simpleWordActions == null || simpleWordActions.Count == 0))
 		{
-			Debug.LogWarning("AssistanceMode: No commands have been configured in either list.", this);
+			Debug.LogWarning("AssistanceMode: No commands have been configured.", this);
 		}
 
-		// Subscribe to transcription events
+		// Initialize cooldown timestamps to ensure commands are ready on start
+		InitializeCooldowns();
+
+		// Subscribe to events
 		appVoiceExperience.VoiceEvents.OnFullTranscription.AddListener(HandleTranscription);
 		appVoiceExperience.VoiceEvents.OnRequestCompleted.AddListener(HandleDictationEnded);
 
-		Debug.Log($"AssistanceMode initialized. Listening for {parameterizedWordActions.Count} parameterized and {simpleWordActions.Count} simple command(s).");
+		Debug.Log($"AssistanceMode initialized. Listening for commands with {commandCooldownDuration}s per-command cooldown.");
 
-		// Automatically activate dictation when the script starts
 		ActivateDictationService();
 	}
 
 	void OnDestroy()
 	{
-		// Stop any pending reactivation if the object is destroyed
 		if (reactivationCoroutine != null)
 		{
 			StopCoroutine(reactivationCoroutine);
 			reactivationCoroutine = null;
 		}
 
-		// IMPORTANT: Always unsubscribe from events
 		if (appVoiceExperience != null)
 		{
 			appVoiceExperience.VoiceEvents.OnFullTranscription.RemoveListener(HandleTranscription);
 			appVoiceExperience.VoiceEvents.OnRequestCompleted.RemoveListener(HandleDictationEnded);
-
-			// Optionally deactivate if it's still active when destroyed
-			if (appVoiceExperience.Active)
-			{
-				appVoiceExperience.Deactivate();
-			}
+			if (appVoiceExperience.Active) appVoiceExperience.Deactivate();
 		}
 	}
+
+	// --- Cooldown Initialization ---
+	void InitializeCooldowns()
+	{
+		float initialTime = Time.time - commandCooldownDuration - 1f; // Ensure ready immediately
+		if (parameterizedWordActions != null)
+		{
+			foreach (var pair in parameterizedWordActions) pair.lastExecutionTime = initialTime;
+		}
+		if (simpleWordActions != null)
+		{
+			foreach (var pair in simpleWordActions) pair.lastExecutionTime = initialTime;
+		}
+	}
+
 
 	// --- Transcription Handling ---
 
@@ -119,9 +138,9 @@ public class AssistanceMode : MonoBehaviour
 
 		Debug.Log($"Transcription received: '{transcript}'");
 		StringComparison comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-		bool commandRecognized = false;
+		bool commandRecognizedThisTranscript = false;
 
-		// 1. Check for Parameterized Commands FIRST
+		// 1. Check for Parameterized Commands
 		if (parameterizedWordActions != null)
 		{
 			foreach (ParameterizedWordActionPair pair in parameterizedWordActions)
@@ -140,10 +159,18 @@ public class AssistanceMode : MonoBehaviour
 							string parameter = transcript.Substring(parameterStartIndex).Trim();
 							if (!string.IsNullOrWhiteSpace(parameter))
 							{
-								Debug.Log($"Parameterized command '{pair.triggerWord}' DETECTED with parameter: '{parameter}'");
-								pair.actionToTrigger?.Invoke(parameter);
-								commandRecognized = true;
-								// Optional: break; // Uncomment if finding one parameterized command should stop checking others
+								// Check per-command cooldown before invoking
+								if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
+								{
+									Debug.Log($"Parameterized command '{pair.triggerWord}' DETECTED with parameter: '{parameter}'");
+									pair.lastExecutionTime = Time.time; // Update timestamp
+									pair.actionToTrigger?.Invoke(parameter);
+									commandRecognizedThisTranscript = true;
+								}
+								else
+								{
+									Debug.Log($"Parameterized command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
+								}
 							}
 						}
 					}
@@ -151,9 +178,8 @@ public class AssistanceMode : MonoBehaviour
 			} // End foreach parameterized
 		}
 
-		// 2. Check for Simple Commands if no parameterized command was already recognized
-		//    (Or remove this 'if' if simple commands can trigger alongside parameterized ones)
-		if (!commandRecognized && simpleWordActions != null)
+		// 2. Check for Simple Commands
+		if (simpleWordActions != null)
 		{
 			foreach (SimpleWordActionPair pair in simpleWordActions)
 			{
@@ -165,17 +191,24 @@ public class AssistanceMode : MonoBehaviour
 					bool isStartOfWord = (index == 0) || (index > 0 && char.IsWhiteSpace(transcript[index - 1]));
 					if (isStartOfWord)
 					{
-						// Check if nothing (or only whitespace) follows the trigger word
 						int endOfTriggerIndex = index + pair.triggerWord.Length;
 						bool nothingFollows = endOfTriggerIndex >= transcript.Length;
 						bool onlyWhitespaceFollows = !nothingFollows && string.IsNullOrWhiteSpace(transcript.Substring(endOfTriggerIndex));
 
 						if (nothingFollows || onlyWhitespaceFollows)
 						{
-							Debug.Log($"Simple command '{pair.triggerWord}' DETECTED.");
-							pair.actionToTrigger?.Invoke();
-							commandRecognized = true;
-							// Optional: break; // Uncomment if finding one simple command should stop checking others
+							// Check per-command cooldown before invoking
+							if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
+							{
+								Debug.Log($"Simple command '{pair.triggerWord}' DETECTED.");
+								pair.lastExecutionTime = Time.time; // Update timestamp
+								pair.actionToTrigger?.Invoke();
+								commandRecognizedThisTranscript = true;
+							}
+							else
+							{
+								Debug.Log($"Simple command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
+							}
 						}
 					}
 				}
@@ -183,15 +216,14 @@ public class AssistanceMode : MonoBehaviour
 		}
 
 
-		if (!commandRecognized)
+		if (!commandRecognizedThisTranscript)
 		{
-			Debug.Log($"No configured commands recognized in the transcript.");
+			Debug.Log($"No configured commands recognized or triggered in the transcript.");
 		}
 	}
 
-	// --- Example Action Methods ---
+	// --- Example Action Methods (Keep examples for both types) ---
 
-	// Example for Parameterized Command List
 	public void Example_GrabItem(string item)
 	{
 		if (!this.gameObject.activeSelf) return;
@@ -199,7 +231,6 @@ public class AssistanceMode : MonoBehaviour
 		// Add logic to grab the specified item...
 	}
 
-	// Example for Parameterized Command List
 	public void Example_ChangeColor(string colorName)
 	{
 		if (!this.gameObject.activeSelf) return;
@@ -210,7 +241,7 @@ public class AssistanceMode : MonoBehaviour
 			Renderer rend = cube.GetComponent<Renderer>();
 			if (rend != null)
 			{
-				Color targetColor = Color.white; // Default
+				Color targetColor = Color.white;
 				switch (colorName.ToLowerInvariant())
 				{
 					case "red": targetColor = Color.red; break;
@@ -223,19 +254,14 @@ public class AssistanceMode : MonoBehaviour
 		}
 	}
 
-	// Example for Simple Command List
 	public void Example_ShowHelp()
 	{
 		if (!this.gameObject.activeSelf) return;
 		Debug.LogWarning($"ASSISTANCE MODE: Example_ShowHelp TRIGGERED (no parameters).");
 		GameObject helpPanel = GameObject.Find("HelpPanel");
-		if (helpPanel != null)
-		{
-			helpPanel.SetActive(!helpPanel.activeSelf);
-		}
+		if (helpPanel != null) helpPanel.SetActive(!helpPanel.activeSelf);
 	}
 
-	// Example for Simple Command List
 	public void Example_ReportStatus()
 	{
 		if (!this.gameObject.activeSelf) return;
@@ -244,7 +270,7 @@ public class AssistanceMode : MonoBehaviour
 	}
 
 
-	// --- Dictation Activation/Reactivation Logic ---
+	// --- Dictation Activation/Reactivation Logic (Unchanged) ---
 
 	private void HandleDictationEnded()
 	{
@@ -278,7 +304,7 @@ public class AssistanceMode : MonoBehaviour
 		else if (isActivating) { Debug.Log("Dictation service already activating."); }
 	}
 
-	public void ManualStartDictation() // Retained for manual triggering if needed
+	public void ManualStartDictation()
 	{
 		ActivateDictationService();
 	}

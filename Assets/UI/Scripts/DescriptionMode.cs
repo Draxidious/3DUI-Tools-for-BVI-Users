@@ -24,6 +24,11 @@ public class DescriptionMode : MonoBehaviour
 		flashlight.gameObject.SetActive(true);
 		ray.gameObject.SetActive(false);
 	}
+	public void describeOff()
+	{
+		flashlight.gameObject.SetActive(false);
+		ray.gameObject.SetActive(false);
+	}
 
 	public void describe()
 	{

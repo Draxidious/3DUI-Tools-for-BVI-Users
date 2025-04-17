@@ -34,10 +34,10 @@ MonoBehaviour:
     lang: en
     isPrivate: 1
     createdAt: 2025-04-05T08:50:51-0700
-    trainingStatus: 3
-    lastTrainDuration: 13
-    lastTrainedAt: 2025-04-06T08:01:46-0700
-    nextTrainAt: 2025-04-06T08:01:58-0700
+    trainingStatus: 1
+    lastTrainDuration: 49
+    lastTrainedAt: 2025-04-06T08:03:14-0700
+    nextTrainAt: 2025-04-06T08:02:25-0700
     intents:
     - id: 2550985228441143
       name: Describe_surroundings
