@@ -479,8 +479,5 @@ public class VoiceGrabController : MonoBehaviour
 		SpeakIfAvailable($"Released {cleanedName}.");
 	}
 
-	// Optional: Add Update logic if needed, e.g., for custom throw mechanics on release
-	// void Update()
-	// {
-	// }
+	
 }
