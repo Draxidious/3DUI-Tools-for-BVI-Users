@@ -5489,7 +5489,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: parameterizedWordActions.Array.data[3].triggerWord
-      value: press
+      value: click
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: parameterizedWordActions.Array.data[0].actionToTrigger.m_PersistentCalls.m_Calls.Array.size

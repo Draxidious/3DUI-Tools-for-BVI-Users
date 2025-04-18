@@ -11,13 +11,22 @@ using TMPro; // Make sure to uncomment this if using TextMeshPro
 
 /// <summary>
 /// Manages voice interaction with UI Buttons and describes UI elements like a screen reader.
-/// Finds interactable/non-interactable buttons and active text elements, maps buttons by name/text,
+/// Finds active buttons (interactable/non-interactable) and text elements, maps buttons by name/text,
 /// triggers button onClick events, and describes UI content (including type and inactive status)
-/// within a scope (default or named canvas parent).
+/// sorted approximately top-to-bottom, within a scope (default or named canvas parent).
 /// Pairs well with VoiceGrabController for handling different types of voice interactions.
 /// </summary>
 public class VoiceUIController : MonoBehaviour
 {
+	// Helper struct to hold information about UI elements for sorting
+	private struct UIElementInfo
+	{
+		public RectTransform RectTransform; // For position sorting
+		public string ElementType; // "Button", "Text"
+		public string NameToSpeak;
+		public string Status; // e.g., "inactive"
+	}
+
 	// Regex to remove Unity's clone numbers like " (1)" or trailing numbers AFTER converting to lowercase
 	private static readonly Regex nameCleaningRegex = new Regex(@"(\s*\(\d+\)|\d+)$", RegexOptions.Compiled);
 
@@ -33,11 +42,11 @@ public class VoiceUIController : MonoBehaviour
 	[Tooltip("Include standalone, active Text and TextMeshPro elements in UI descriptions.")]
 	public bool describeStandaloneText = true;
 	[Tooltip("Indicate when buttons are not interactable (e.g., disabled).")]
-	public bool describeButtonInactiveState = true; // New setting
+	public bool describeButtonInactiveState = true;
 
-	// Map CLEANED, LOWERCASE names (from text or GameObject) to a LIST of Buttons
+	// Map CLEANED, LOWERCASE names (from text or GameObject) to a LIST of Buttons (Used primarily for interaction matching now)
 	private Dictionary<string, List<Button>> interactableButtonsByCleanName = new Dictionary<string, List<Button>>();
-	// Store the original text/name used for mapping, useful for screen reader function
+	// Store the original text/name used for mapping, useful for screen reader function if needed elsewhere, but description builds dynamically now
 	private Dictionary<Button, string> buttonToSpokenNameMap = new Dictionary<Button, string>();
 
 
@@ -51,18 +60,17 @@ public class VoiceUIController : MonoBehaviour
 				Debug.LogError("VoiceUIController: TTSSpeaker component has not been assigned and couldn't be found on this GameObject!");
 			}
 		}
-		// Initial scan based on the default targetCanvas or whole scene
+		// Initial scan still useful for mapping buttons for interaction lookup
 		FindAndMapInteractableButtons();
 	}
 
 	/// <summary>
-	/// Finds interactable UI Buttons within the default scope (targetCanvas or scene) and maps them.
-	/// Populates dictionaries used for interaction and the default DescribeVisibleUI().
+	/// Finds UI Buttons within the default scope and maps them for interaction lookup.
+	/// Description methods now perform their own searches.
 	/// </summary>
 	public void FindAndMapInteractableButtons()
 	{
-		// [Code for finding and mapping buttons remains largely the same]
-		// ... (omitted for brevity, same as previous version) ...
+		// [Code remains the same as previous version - populates dictionaries]
 		interactableButtonsByCleanName.Clear();
 		buttonToSpokenNameMap.Clear();
 		Button[] allButtons;
@@ -102,7 +110,6 @@ public class VoiceUIController : MonoBehaviour
 				continue;
 			}
 
-			// Map buttons regardless of interactable state for potential description
 			if (interactableButtonsByCleanName.TryGetValue(cleanedName, out List<Button> buttonList))
 			{
 				buttonList.Add(button);
@@ -111,15 +118,14 @@ public class VoiceUIController : MonoBehaviour
 			{
 				interactableButtonsByCleanName.Add(cleanedName, new List<Button> { button });
 			}
-			// Store spoken name for all mapped buttons
 			buttonToSpokenNameMap[button] = spokenName;
 			mappedCount++;
 		}
-		Debug.Log($"Initial Mapping: Mapped {mappedCount} Buttons across {interactableButtonsByCleanName.Count} unique cleaned names.");
+		Debug.Log($"Initial Mapping: Mapped {mappedCount} Buttons across {interactableButtonsByCleanName.Count} unique cleaned names for interaction.");
 	}
 
 	/// <summary>
-	/// Helper to get text from TextMeshPro or legacy Text component on a button's children.
+	/// Helper to get text from TextMeshPro or legacy Text component.
 	/// </summary>
 	private string GetButtonText(Button button)
 	{
@@ -133,7 +139,7 @@ public class VoiceUIController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Cleans a name (from GameObject or Text) for use as a dictionary key.
+	/// Cleans a name for use as a dictionary key.
 	/// </summary>
 	private string CleanNameForDictionary(string originalName)
 	{
@@ -180,15 +186,13 @@ public class VoiceUIController : MonoBehaviour
 
 	/// <summary>
 	/// Checks if the dictated input matches any known *and currently interactable* button.
-	/// (Interaction logic still only targets interactable buttons)
 	/// </summary>
 	public bool IsUIInteractable(string dictatedInput)
 	{
-		// [Code remains the same - only checks if an INTERACTABLE match exists]
+		// [Code remains the same]
 		string bestMatch = FindBestMatchingCleanedName(dictatedInput);
 		if (bestMatch != null && interactableButtonsByCleanName.TryGetValue(bestMatch, out var candidates))
 		{
-			// Check if any candidate matching the name is actually interactable
 			return candidates.Any(b => b != null && b.gameObject.activeInHierarchy && b.IsInteractable());
 		}
 		return false;
@@ -199,41 +203,29 @@ public class VoiceUIController : MonoBehaviour
 	/// </summary>
 	public void InteractWithUIByName(string dictatedInput)
 	{
-		// [Code remains the same - only finds and clicks INTERACTABLE buttons]
+		Debug.LogWarning("said name: " + dictatedInput);
+		// [Code remains the same]
 		string targetCleanedName = FindBestMatchingCleanedName(dictatedInput);
-		if (targetCleanedName == null)
-		{
-			Debug.LogWarning($"Voice UI Interaction: Cannot find mapped UI element matching '{dictatedInput}'.");
-			return;
-		}
+		Debug.LogWarning("clean name: "+ targetCleanedName);
+		
+		if (targetCleanedName == null) { return; }
 		if (!interactableButtonsByCleanName.TryGetValue(targetCleanedName, out List<Button> candidates))
 		{
 			Debug.LogError($"Voice UI Interaction: Internal error. Found key '{targetCleanedName}' but no list.");
-			SpeakIfAvailable("Sorry, something went wrong.");
-			return;
+			ttsSpeaker.Speak("Sorry, something went wrong."); return;
 		}
-		// IMPORTANT: Still only finds the first INTERACTABLE button to click
+		Debug.LogWarning("looked for button");
 		Button buttonToClick = candidates.FirstOrDefault(b => b != null && b.gameObject.activeInHierarchy && b.IsInteractable());
 		if (buttonToClick == null)
 		{
-			// Check if button exists but isn't interactable
 			bool anyExistButNotInteractable = candidates.Any(b => b != null && b.gameObject.activeInHierarchy && !b.IsInteractable());
-			if (anyExistButNotInteractable)
-			{
-				SpeakIfAvailable($"{targetCleanedName} is not interactable right now.");
-			}
-			else
-			{
-				bool anyExistAtAll = candidates.Any(b => b != null && b.gameObject != null);
-				SpeakIfAvailable(anyExistAtAll ? $"{targetCleanedName} is not available right now." : $"Cannot find {targetCleanedName} right now.");
-			}
+			if (anyExistButNotInteractable) { ttsSpeaker.SpeakQueued($"{targetCleanedName} is not interactable right now."); }
+			else { ttsSpeaker.SpeakQueued($"Cannot interact with {targetCleanedName} right now."); }
 			return;
 		}
-		if (candidates.Count(b => b != null && b.gameObject.activeInHierarchy && b.IsInteractable()) > 1)
-		{
-			Debug.LogWarning($"Voice UI Interaction: Multiple interactable buttons match '{targetCleanedName}'. Clicking first: '{buttonToClick.gameObject.name}'.");
-		}
 		PerformUIClick(buttonToClick);
+		ttsSpeaker.SpeakQueued("clicked");
+		Debug.LogWarning("clicked");
 	}
 
 	/// <summary>
@@ -243,13 +235,7 @@ public class VoiceUIController : MonoBehaviour
 	{
 		// [Code remains the same]
 		if (button == null) return;
-		string nameToSpeak;
-		if (!buttonToSpokenNameMap.TryGetValue(button, out nameToSpeak))
-		{
-			string buttonText = GetButtonText(button);
-			if (preferButtonText && !string.IsNullOrWhiteSpace(buttonText)) { nameToSpeak = buttonText; }
-			else { nameToSpeak = CleanNameForDictionary(button.gameObject.name); }
-		}
+		string nameToSpeak = GetSpokenNameForButton(button);
 		Debug.Log($"Voice UI: Invoking onClick for button '{button.gameObject.name}' (Speaking as: '{nameToSpeak}')");
 		try
 		{
@@ -263,225 +249,172 @@ public class VoiceUIController : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Helper to get the appropriate spoken name for a button based on settings.
+	/// </summary>
+	private string GetSpokenNameForButton(Button button)
+	{
+		// [Code remains the same]
+		if (button == null) return "unnamed button";
+		if (preferButtonText)
+		{
+			string buttonText = GetButtonText(button);
+			if (!string.IsNullOrWhiteSpace(buttonText))
+			{
+				return buttonText;
+			}
+		}
+		return CleanNameForDictionary(button.gameObject.name);
+	}
+
 	// +++ SCREEN READER FUNCTIONALITY +++
 
 	/// <summary>
-	/// Describes active buttons (interactable and non-interactable) AND standalone text elements within the default scope.
+	/// Describes active buttons and text elements within the default scope, sorted approximately top-to-bottom.
 	/// </summary>
 	public void DescribeVisibleUI()
 	{
-		if (!CheckTTSSpeaker()) return;
-
-		StringBuilder description = new StringBuilder();
-		int buttonCount = 0;
-		int textCount = 0;
-		GameObject scope = (targetCanvas != null) ? targetCanvas.gameObject : null;
-
-		// --- Describe Buttons (including inactive) ---
-		// Iterate through all mapped buttons, check active state, then determine interactable status
-		HashSet<GameObject> buttonGameObjects = new HashSet<GameObject>();
-		foreach (var kvp in buttonToSpokenNameMap)
-		{
-			Button button = kvp.Key;
-			if (button != null && button.gameObject.activeInHierarchy) // Check if button's GO is active
-			{
-				// Determine status only if describing state is enabled
-				string status = "";
-				if (describeButtonInactiveState && !button.IsInteractable())
-				{
-					status = "inactive"; // Or "disabled"
-				}
-				AppendElementDescription(description, ref buttonCount, "Button", kvp.Value, status);
-				buttonGameObjects.Add(button.gameObject);
-			}
-		}
-
-		// --- Describe Standalone Text (if enabled) ---
-		if (describeStandaloneText)
-		{
-			// Pass button GOs to avoid describing their text labels separately if possible
-			DescribeTextElements(description, ref textCount, scope, buttonGameObjects);
-		}
-
-		// --- Speak Result ---
-		SpeakDescriptionResult(description, buttonCount, textCount, "visible");
-		Debug.Log($"VoiceUI DescribeVisibleUI: Found {buttonCount} active buttons and {textCount} text elements in default scope.");
+		ProcessAndDescribeScope(null, "visible");
 	}
 
 	/// <summary>
-	/// Describes active buttons (interactable and non-interactable) AND standalone text elements within a specific Canvas identified by its PARENT's name.
+	/// Describes active buttons and text elements within a specific Canvas identified by its PARENT's name, sorted approximately top-to-bottom.
 	/// </summary>
-	/// <param name="parentName">The name of the PARENT GameObject whose child Canvas should be described.</param>
 	public void DescribeCanvasByName(string parentName)
 	{
+		// [Code remains the same]
 		if (!CheckTTSSpeaker()) return;
 		if (string.IsNullOrWhiteSpace(parentName))
 		{
 			Debug.LogError("DescribeCanvasByName: Parent name cannot be empty.");
-			SpeakIfAvailable("Please specify which UI area to describe.");
-			return;
+			SpeakIfAvailable("Please specify which UI area to describe."); return;
 		}
-
-		// Find the canvas via parent name
 		Canvas requestedCanvas = FindObjectsByType<Canvas>(FindObjectsSortMode.None)
 			.FirstOrDefault(c => c.transform.parent != null && c.transform.parent.gameObject.name.Equals(parentName, StringComparison.OrdinalIgnoreCase));
-
 		if (requestedCanvas == null)
 		{
 			Debug.LogWarning($"DescribeCanvasByName: Canvas whose parent is named '{parentName}' not found.");
-			SpeakIfAvailable($"Sorry, I couldn't find a UI area named {parentName}.");
-			return;
+			SpeakIfAvailable($"Sorry, I couldn't find a UI area named {parentName}."); return;
 		}
+		ProcessAndDescribeScope(requestedCanvas.gameObject, $"in the {parentName} area");
+	}
 
-		// Proceed to describe the contents of this specific canvas
-		string actualCanvasName = requestedCanvas.gameObject.name;
-		Debug.Log($"DescribeCanvasByName: Found canvas '{actualCanvasName}' under parent '{parentName}'. Describing its content.");
+	/// <summary>
+	/// Core logic to find, sort, and describe UI elements within a given scope.
+	/// </summary>
+	private void ProcessAndDescribeScope(GameObject scope, string context)
+	{
+		// [Code remains the same - finds elements, adds to list]
+		if (!CheckTTSSpeaker()) return;
+		List<UIElementInfo> elementsToDescribe = new List<UIElementInfo>();
+		HashSet<GameObject> buttonGameObjects = new HashSet<GameObject>();
+		GameObject searchRoot = scope;
+		if (scope == null && targetCanvas != null) { searchRoot = targetCanvas.gameObject; }
 
-		StringBuilder description = new StringBuilder();
-		int buttonCount = 0;
-		int textCount = 0;
-		GameObject scope = requestedCanvas.gameObject; // Scope is the canvas itself
-
-		// --- Describe Buttons within this canvas (including inactive) ---
-		Button[] buttonsInCanvas = scope.GetComponentsInChildren<Button>(true); // Get all buttons
-		HashSet<GameObject> buttonGameObjects = new HashSet<GameObject>(); // To track button GOs
-
-		foreach (var button in buttonsInCanvas)
+		// Find Buttons
+		Button[] buttons;
+		if (searchRoot != null) { buttons = searchRoot.GetComponentsInChildren<Button>(true); }
+		else { buttons = FindObjectsByType<Button>(FindObjectsSortMode.None); }
+		foreach (var button in buttons)
 		{
-			// Check only if the button's GO is active in the hierarchy
-			if (button != null && button.gameObject.activeInHierarchy)
+			if (button != null && button.gameObject.activeInHierarchy && button.TryGetComponent<RectTransform>(out var rectTransform))
 			{
-				string nameToSpeak;
-				string buttonText = GetButtonText(button);
-				if (preferButtonText && !string.IsNullOrWhiteSpace(buttonText))
-				{
-					nameToSpeak = buttonText;
-				}
-				else
-				{
-					nameToSpeak = CleanNameForDictionary(button.gameObject.name);
-				}
-
-				// Determine status only if describing state is enabled
-				string status = "";
-				if (describeButtonInactiveState && !button.IsInteractable())
-				{
-					status = "inactive";
-				}
-
-				AppendElementDescription(description, ref buttonCount, "Button", nameToSpeak, status);
-				buttonGameObjects.Add(button.gameObject); // Track the button's GameObject
+				string nameToSpeak = GetSpokenNameForButton(button);
+				string status = (describeButtonInactiveState && !button.IsInteractable()) ? "inactive" : "";
+				elementsToDescribe.Add(new UIElementInfo { RectTransform = rectTransform, ElementType = "Button", NameToSpeak = nameToSpeak, Status = status });
+				buttonGameObjects.Add(button.gameObject);
+			}
+			else if (button != null && button.gameObject.activeInHierarchy)
+			{
+				Debug.LogWarning($"Button '{button.name}' lacks a RectTransform, cannot sort by position.", button.gameObject);
 			}
 		}
 
-		// --- Describe Standalone Text within this canvas (if enabled) ---
+		// Find Text
 		if (describeStandaloneText)
 		{
-			// Pass button GOs to avoid describing their text labels separately if possible
-			DescribeTextElements(description, ref textCount, scope, buttonGameObjects);
-		}
-
-		// --- Speak Result ---
-		SpeakDescriptionResult(description, buttonCount, textCount, $"in the {parentName} area");
-		Debug.Log($"VoiceUI DescribeCanvasByName: Found {buttonCount} active buttons and {textCount} text elements in canvas '{actualCanvasName}' under parent '{parentName}'.");
-	}
-
-	/// <summary>
-	/// Helper method to find and append descriptions for active Text and TextMeshProUGUI elements within a given scope.
-	/// </summary>
-	private void DescribeTextElements(StringBuilder builder, ref int textCount, GameObject scope, HashSet<GameObject> ignoreIfChildOf = null)
-	{
-		// Find TextMeshProUGUI elements
-		TextMeshProUGUI[] textComponentsTMP;
-		if (scope != null) { textComponentsTMP = scope.GetComponentsInChildren<TextMeshProUGUI>(true); }
-		else { textComponentsTMP = FindObjectsByType<TextMeshProUGUI>(FindObjectsSortMode.None); }
-
-		foreach (var tmp in textComponentsTMP)
-		{
-			if (tmp != null && tmp.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(tmp.text))
+			// Find TextMeshProUGUI
+			TextMeshProUGUI[] textComponentsTMP;
+			if (searchRoot != null) { textComponentsTMP = searchRoot.GetComponentsInChildren<TextMeshProUGUI>(true); }
+			else { textComponentsTMP = FindObjectsByType<TextMeshProUGUI>(FindObjectsSortMode.None); }
+			foreach (var tmp in textComponentsTMP)
 			{
-				// Simple check: ignore if the text component's direct parent is in the ignore set
-				// This helps avoid reading button labels as separate text if preferButtonText is false
-				bool ignore = ignoreIfChildOf != null && tmp.transform.parent != null && ignoreIfChildOf.Contains(tmp.transform.parent.gameObject);
-
-				if (!ignore)
+				if (tmp != null && tmp.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(tmp.text) && tmp.TryGetComponent<RectTransform>(out var rectTransform))
 				{
-					// Pass empty status for text elements
-					AppendElementDescription(builder, ref textCount, "Text", tmp.text, "");
+					bool ignore = tmp.transform.parent != null && buttonGameObjects.Contains(tmp.transform.parent.gameObject);
+					if (!ignore) { elementsToDescribe.Add(new UIElementInfo { RectTransform = rectTransform, ElementType = "Text", NameToSpeak = tmp.text, Status = "" }); }
+				}
+			}
+			// Find legacy Text
+			Text[] textComponentsLegacy;
+			if (searchRoot != null) { textComponentsLegacy = searchRoot.GetComponentsInChildren<Text>(true); }
+			else { textComponentsLegacy = FindObjectsByType<Text>(FindObjectsSortMode.None); }
+			foreach (var text in textComponentsLegacy)
+			{
+				if (text != null && text.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(text.text) && text.TryGetComponent<RectTransform>(out var rectTransform))
+				{
+					bool ignore = text.transform.parent != null && buttonGameObjects.Contains(text.transform.parent.gameObject);
+					if (!ignore) { elementsToDescribe.Add(new UIElementInfo { RectTransform = rectTransform, ElementType = "Text", NameToSpeak = text.text, Status = "" }); }
 				}
 			}
 		}
 
-		// Find legacy Text elements
-		Text[] textComponentsLegacy;
-		if (scope != null) { textComponentsLegacy = scope.GetComponentsInChildren<Text>(true); }
-		else { textComponentsLegacy = FindObjectsByType<Text>(FindObjectsSortMode.None); }
+		// Sort Elements
+		var sortedElements = elementsToDescribe.OrderByDescending(info => info.RectTransform.position.y).ToList();
 
-		foreach (var text in textComponentsLegacy)
+		// Build Description String
+		StringBuilder description = new StringBuilder();
+		for (int i = 0; i < sortedElements.Count; i++)
 		{
-			if (text != null && text.gameObject.activeInHierarchy && !string.IsNullOrWhiteSpace(text.text))
-			{
-				bool ignore = ignoreIfChildOf != null && text.transform.parent != null && ignoreIfChildOf.Contains(text.transform.parent.gameObject);
-
-				if (!ignore)
-				{
-					// Pass empty status for text elements
-					AppendElementDescription(builder, ref textCount, "Text", text.text, "");
-				}
-			}
+			AppendElementDescription(description, i, sortedElements[i]); // Call updated helper
 		}
+
+		// Speak Result
+		SpeakDescriptionResult(description, sortedElements.Count, context);
+		Debug.Log($"VoiceUI Description ({context}): Found and sorted {sortedElements.Count} elements.");
 	}
 
 
 	/// <summary>
-	/// Helper to append element description (Button or Text) to the StringBuilder, including type prefix and status suffix.
+	/// Helper to append a single element's description to the StringBuilder.
+	/// Formats as "[Status] [Type] [Name]" (e.g., "inactive Button Settings", "Button Start", "Welcome Text").
 	/// </summary>
 	/// <param name="builder">StringBuilder to append to.</param>
-	/// <param name="count">Reference to the count of elements of this type found.</param>
-	/// <param name="elementType">Type of the element (e.g., "Button", "Text").</param>
-	/// <param name="nameToSpeak">The text/name content of the element.</param>
-	/// <param name="status">Optional status text (e.g., "inactive").</param>
-	private void AppendElementDescription(StringBuilder builder, ref int count, string elementType, string nameToSpeak, string status = "")
+	/// <param name="index">Index of the element in the sorted list (for separators).</param>
+	/// <param name="elementInfo">Information about the element to describe.</param>
+	private void AppendElementDescription(StringBuilder builder, int index, UIElementInfo elementInfo)
 	{
-		if (count == 0)
+		if (index > 0)
 		{
-			// First element of this type
-			if (builder.Length > 0) builder.Append(" "); // Add space if previous type was already added
-														 // Add introductory phrase like "Button elements are: " or "Text elements are: "
-			builder.Append($"{elementType} elements are: ");
-		}
-		else
-		{
-			builder.Append(". "); // Separator between elements of the same type
+			builder.Append(". "); // Separator between elements
 		}
 
-		// Prepend type only if it's not "Text" (or add other types here later)
-		string prefix = (elementType == "Button") ? elementType + " " : "";
-		// Append status if provided
-		string suffix = !string.IsNullOrEmpty(status) ? ", " + status : "";
+		// Determine status prefix (e.g., "inactive ") - includes trailing space if status exists
+		string statusPrefix = !string.IsNullOrEmpty(elementInfo.Status) ? elementInfo.Status + " " : "";
+		// Determine type prefix (e.g., "Button ") - only if not Text, includes trailing space
+		string typePrefix = (elementInfo.ElementType == "Button") ? elementInfo.ElementType + " " : "";
+		// Note: Add other types like "Slider ", "Toggle " here if you expand functionality later
 
-		builder.Append($"{prefix}{nameToSpeak}{suffix}");
-		count++;
+		// Sanitize text for speech
+		string sanitizedNameToSpeak = elementInfo.NameToSpeak.Replace("\n", " ").Replace("\r", "");
+
+		// Combine in the new order: Status Type Name
+		builder.Append($"{statusPrefix}{typePrefix}{sanitizedNameToSpeak}");
 	}
 
+
 	/// <summary>
-	/// Helper to speak the final description result, potentially combining buttons and text.
+	/// Helper to speak the final description result.
 	/// </summary>
-	private void SpeakDescriptionResult(StringBuilder builder, int buttonCount, int textCount, string context)
+	private void SpeakDescriptionResult(StringBuilder builder, int elementCount, string context)
 	{
-		// [Code remains the same - handles combined output]
-		if (buttonCount > 0 || textCount > 0)
+		// [Code remains the same]
+		if (elementCount > 0)
 		{
-			// Contains buttons and/or text - builder already has the sections
-			builder.Append("."); // End sentence
 			SpeakIfAvailable(builder.ToString());
 		}
-		// Removed separate checks for buttonCount > 0 && textCount > 0 etc. as the builder handles it.
-		// else if (buttonCount > 0) { ... }
-		// else if (textCount > 0) { ... }
 		else
 		{
-			// Neither found
 			SpeakIfAvailable($"There are no interactable buttons or text elements {context} right now.");
 		}
 	}
@@ -523,12 +456,12 @@ public class VoiceUIController : MonoBehaviour
 
 	/// <summary>
 	/// Call this method if UI Buttons are added/removed/renamed/text changes dynamically
-	/// to update the internal mapping used for general interaction and DescribeVisibleUI().
+	/// to update the internal mapping used for interaction lookup. Description is now dynamic.
 	/// </summary>
 	public void RefreshInteractableButtons()
 	{
 		// [Code remains the same]
-		Debug.Log("VoiceUIController: Refreshing interactable UI Button list and spoken names for default scope.");
+		Debug.Log("VoiceUIController: Refreshing interactable UI Button list mapping for interaction.");
 		FindAndMapInteractableButtons();
 	}
 }
