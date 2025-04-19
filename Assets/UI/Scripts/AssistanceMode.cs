@@ -162,14 +162,14 @@ public class AssistanceMode : MonoBehaviour
 								// Check per-command cooldown before invoking
 								if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
 								{
-									Debug.Log($"Parameterized command '{pair.triggerWord}' DETECTED with parameter: '{parameter}'");
+									Debug.LogWarning($"Parameterized command '{pair.triggerWord}' DETECTED with parameter: '{parameter}'");
 									pair.lastExecutionTime = Time.time; // Update timestamp
 									pair.actionToTrigger?.Invoke(parameter);
 									commandRecognizedThisTranscript = true;
 								}
 								else
 								{
-									Debug.Log($"Parameterized command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
+									Debug.LogWarning($"Parameterized command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
 								}
 							}
 						}
@@ -291,13 +291,13 @@ public class AssistanceMode : MonoBehaviour
 
 	private void ActivateDictationService()
 	{
-		Debug.Log($"Attempting ActivateDictationService. Is AppVoiceExperience null? {appVoiceExperience == null}. Is Active? {appVoiceExperience?.Active}. Is Activating flag set? {isActivating}");
+		//Debug.Log($"Attempting ActivateDictationService. Is AppVoiceExperience null? {appVoiceExperience == null}. Is Active? {appVoiceExperience?.Active}. Is Activating flag set? {isActivating}");
 		if (appVoiceExperience != null && !appVoiceExperience.Active && !isActivating)
 		{
-			Debug.Log("Activating dictation service...");
+			//Debug.Log("Activating dictation service...");
 			isActivating = true;
 			appVoiceExperience.Activate();
-			Debug.Log("appVoiceExperience.Activate() called.");
+			//Debug.Log("appVoiceExperience.Activate() called.");
 		}
 		else if (appVoiceExperience == null) { Debug.LogError("Cannot activate dictation, AppVoiceExperience is not assigned."); }
 		else if (appVoiceExperience.Active) { Debug.Log("Dictation service already active."); isActivating = false; }
