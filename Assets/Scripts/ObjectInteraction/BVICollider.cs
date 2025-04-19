@@ -6,8 +6,6 @@ using UnityEngine.InputSystem;
 
 public class BVICollider : MonoBehaviour
 {
-    // The TTSSpeaker used to announce object names.
-    public TTSSpeaker speaker;
 
     // A name that identifies this collider (e.g., "forward", "left").
     // The orientation phrase (e.g., "in front of you") is derived from this.
@@ -74,14 +72,15 @@ public class BVICollider : MonoBehaviour
     /// - The first (lowest) object’s announcement also includes the collider’s orientation phrase.
     /// - The relative x/z description is appended (computed relative to the XR Origin's main camera) based on the provided booleans.
     /// </summary>
-    public void AnnounceObjects(bool includeForward, bool includeBack, bool includeLeft, bool includeRight)
+    public string AnnounceObjects(bool includeForward, bool includeBack, bool includeLeft, bool includeRight)
     {
         if (enteredObjects.Count == 0)
-            return;
+            return "";
 
         // Sort the objects by their y value (lowest first).
         List<GameObject> sortedObjects = enteredObjects.OrderBy(o => o.transform.position.y).ToList();
         GameObject previous = null;
+        string fullDescription = "";
 
         foreach (var obj in sortedObjects)
         {
@@ -127,18 +126,13 @@ public class BVICollider : MonoBehaviour
                 }
             }
 
-            if (speaker != null)
-            {
-                Debug.Log("Announcing: " + message);
-                speaker.SpeakQueued(message);
-            }
-            else
-            {
-                Debug.LogWarning("Speaker not assigned on " + gameObject.name);
-            }
+            //Debug.Log("Announcing: " + message);
+            fullDescription += message + "\n";
 
             previous = obj;
         }
+        Debug.Log("Full Description: " + fullDescription);
+        return fullDescription;
     }
 
     /// <summary>
