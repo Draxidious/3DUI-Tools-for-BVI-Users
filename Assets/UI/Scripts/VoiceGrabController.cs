@@ -2,13 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
- // Ensure this namespace is correct for your XRI version
-										  // If using newer XRI versions (2.0+), you might need these:
-										  // using UnityEngine.XR.Interaction.Toolkit.Interactables;
-										  // using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactables; // Ensure this namespace is correct
 using Meta.WitAi.TTS.Utilities; // Namespace for Meta TTSSpeaker
 using System.Text.RegularExpressions;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class VoiceGrabController : MonoBehaviour
 {
@@ -26,9 +22,11 @@ public class VoiceGrabController : MonoBehaviour
 	[Header("TTS Settings")]
 	public TTSSpeaker ttsSpeaker;
 
+	[Header("Camera")]
+	// Reference to the main camera, assign in Inspector or find automatically
+	public Camera mainCamera;
+
 	// Map CLEANED, LOWERCASE names to a LIST of grabbable objects sharing that cleaned name
-	// Key: lowercase, trimmed name without clone numbers (e.g., "red cube")
-	// Value: List of objects matching that key
 	public Dictionary<string, List<XRGrabInteractable>> grabbableObjectsByCleanName = new Dictionary<string, List<XRGrabInteractable>>();
 
 	// Track held objects
@@ -52,32 +50,38 @@ public class VoiceGrabController : MonoBehaviour
 			maxGrabDistance = 0;
 			Debug.LogWarning("Max Grab Distance cannot be negative. Setting to 0.");
 		}
+
+		// Find the main camera if not assigned
+		if (mainCamera == null)
+		{
+			mainCamera = Camera.main;
+			if (mainCamera == null)
+			{
+				Debug.LogError("VoiceGrabController: Main Camera could not be found automatically. Please assign it in the Inspector.");
+			}
+		}
+
 		FindAndMapGrabbableObjects();
-		Debug.LogWarning(grabbableObjectsByCleanName.ToString());
+		Debug.Log($"Mapped {grabbableObjectsByCleanName.Count} unique names: {string.Join(", ", grabbableObjectsByCleanName.Keys)}");
 	}
 
 	// Finds all XRGrabInteractable objects and maps them by their CLEANED, LOWERCASE name
 	void FindAndMapGrabbableObjects()
 	{
 		grabbableObjectsByCleanName.Clear();
-		// FindObjectsOfType is deprecated, use FindObjectsByType in newer Unity versions
-		// XRGrabInteractable[] allGrabbables = FindObjectsOfType<XRGrabInteractable>(true);
-		XRGrabInteractable[] allGrabbables = FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None); // Includes inactive if needed: FindObjectsInactive.Include
+		XRGrabInteractable[] allGrabbables = FindObjectsByType<XRGrabInteractable>(FindObjectsSortMode.None);
 
 		foreach (var grabObj in allGrabbables)
 		{
-			// Check if the object is on the specified grabbable layer
-			if (((1 << grabObj.gameObject.layer) & grabbableLayer) == 0)
-			{
-				continue; // Skip if not on the correct layer
-			}
+			if (((1 << grabObj.gameObject.layer) & grabbableLayer) == 0) continue;
 
 			string originalName = grabObj.gameObject.name;
-			string cleanedName = CleanNameForDictionary(originalName); // Use specific cleaning for dictionary keys
+			string cleanedName = CleanNameForDictionary(originalName);
 
-			if (string.IsNullOrEmpty(cleanedName)) // Skip objects with no usable name after cleaning
+			if (string.IsNullOrEmpty(cleanedName) || cleanedName == "unnamed object")
 			{
-				Debug.LogWarning($"Object '{originalName}' resulted in an empty cleaned name. Skipping.");
+				// Keep this warning minimal as it can be spammy if many objects lack good names
+				// Debug.LogWarning($"Object '{originalName}' resulted in an empty or default cleaned name. Skipping.");
 				continue;
 			}
 
@@ -108,14 +112,13 @@ public class VoiceGrabController : MonoBehaviour
 
 		string lowerName = originalName.ToLowerInvariant();
 		string cleaned = nameCleaningRegex.Replace(lowerName, "").Trim();
-		// Prevent returning empty strings which are invalid dictionary keys
+		// Use "unnamed object" as a fallback key if cleaning results in empty string
 		return string.IsNullOrEmpty(cleaned) ? "unnamed object" : cleaned;
 	}
 
 	/// <summary>
 	/// Cleans dictated input for matching against dictionary keys.
-	/// Converts to lowercase and trims whitespace. Does NOT remove numbers here,
-	/// as the dictation might intentionally include them (e.g., "block 1").
+	/// Converts to lowercase and trims whitespace.
 	/// </summary>
 	private string CleanDictatedInput(string dictatedInput)
 	{
@@ -125,10 +128,8 @@ public class VoiceGrabController : MonoBehaviour
 
 	/// <summary>
 	/// Finds the best matching CLEANED object name from the dictionary based on the dictated input.
-	/// It prioritizes the longest match where the cleaned dictated input STARTS WITH a known cleaned object name.
+	/// Prioritizes the longest match where the cleaned dictated input STARTS WITH a known cleaned object name.
 	/// </summary>
-	/// <param name="dictatedInput">The raw string from voice dictation.</param>
-	/// <returns>The best matching cleaned name key from the dictionary, or null if no match found.</returns>
 	private string FindBestMatchingCleanedName(string dictatedInput)
 	{
 		string cleanedInput = CleanDictatedInput(dictatedInput);
@@ -137,13 +138,13 @@ public class VoiceGrabController : MonoBehaviour
 		string bestMatch = null;
 		int longestMatchLength = 0;
 
-		// Iterate through all known cleaned names (dictionary keys)
 		foreach (string knownCleanedName in grabbableObjectsByCleanName.Keys)
 		{
-			// Check if the cleaned dictated input *starts with* a known object name
-			if (cleanedInput.StartsWith(knownCleanedName, StringComparison.Ordinal)) // Ordinal is efficient for known-case comparison
+			// Skip the placeholder key if it exists
+			if (knownCleanedName == "unnamed object") continue;
+
+			if (cleanedInput.StartsWith(knownCleanedName, StringComparison.Ordinal))
 			{
-				// If this match is longer than the current best match, update
 				if (knownCleanedName.Length > longestMatchLength)
 				{
 					longestMatchLength = knownCleanedName.Length;
@@ -151,10 +152,8 @@ public class VoiceGrabController : MonoBehaviour
 				}
 			}
 		}
-
-		return bestMatch; // This will be null if no starting match was found
+		return bestMatch;
 	}
-
 
 	/// <summary>
 	/// Checks if any known grabbable object name matches the start of the dictated input.
@@ -165,10 +164,9 @@ public class VoiceGrabController : MonoBehaviour
 		return bestMatch != null;
 	}
 
-
 	/// <summary>
 	/// Grabs an object based on voice input. Matches the beginning of the input against known object names.
-	/// If multiple objects share the best matching name, grabs the closest available one within maxGrabDistance.
+	/// If multiple objects share the best matching name, grabs the closest available one within maxGrabDistance to either hand.
 	/// </summary>
 	public void GrabObjectByName(string dictatedInput)
 	{
@@ -177,62 +175,51 @@ public class VoiceGrabController : MonoBehaviour
 		if (targetCleanedName == null)
 		{
 			Debug.LogWarning($"Voice Grab: Cannot find any known object matching the start of '{dictatedInput}'.");
-			ttsSpeaker.SpeakQueued($"Sorry, I didn't find an object matching {dictatedInput}.");
+			SpeakIfAvailable($"Sorry, I didn't find an object matching {dictatedInput}.");
 			return;
 		}
 
-		// We found a matching key, now get the list of actual objects
 		if (!grabbableObjectsByCleanName.TryGetValue(targetCleanedName, out List<XRGrabInteractable> candidates))
 		{
-			// This should theoretically not happen if FindBestMatchingCleanedName returned a non-null key
 			Debug.LogError($"Voice Grab: Internal error. Found key '{targetCleanedName}' but no corresponding list.");
-			ttsSpeaker.SpeakQueued("Sorry, something went wrong.");
+			SpeakIfAvailable("Sorry, something went wrong.");
 			return;
 		}
 
-		// Filter out candidates that are already held
 		List<XRGrabInteractable> availableCandidates = candidates
 			.Where(c => c != null && c.gameObject != null && c != heldObjectLeft && c != heldObjectRight)
 			.ToList();
 
 		if (availableCandidates.Count == 0)
 		{
-			// Check if it's because they are held or because the objects were destroyed/disabled
 			bool anyExist = candidates.Any(c => c != null && c.gameObject != null);
 			if (anyExist)
 			{
 				Debug.LogWarning($"Voice Grab: All available objects named '{targetCleanedName}' are already held.");
-				ttsSpeaker.SpeakQueued($"Already holding {targetCleanedName}.");
+				SpeakIfAvailable($"Already holding {targetCleanedName}.");
 			}
 			else
 			{
-				Debug.LogWarning($"Voice Grab: Found match for '{targetCleanedName}', but no valid objects currently exist in the scene (perhaps destroyed or inactive?).");
-				ttsSpeaker.SpeakQueued($"Cannot find {targetCleanedName} right now.");
-				// Optional: Refresh the map if objects might be dynamically added/removed
-				// FindAndMapGrabbableObjects();
+				Debug.LogWarning($"Voice Grab: Found match for '{targetCleanedName}', but no valid objects currently exist in the scene.");
+				SpeakIfAvailable($"Cannot find {targetCleanedName} right now.");
 			}
 			return;
 		}
 
-		// Find the closest available candidate *within max distance* to either hand
 		XRGrabInteractable closestCandidate = null;
 		float minDistanceSq = float.MaxValue;
-		float maxDistSq = maxGrabDistance * maxGrabDistance; // Calculate squared max distance once
-
+		float maxDistSq = maxGrabDistance * maxGrabDistance;
 		Vector3 leftHandPos = leftHandController.position;
 		Vector3 rightHandPos = rightHandController.position;
 
 		foreach (var candidate in availableCandidates)
 		{
-			// Ensure candidate is not null before accessing transform
 			if (candidate == null || candidate.transform == null) continue;
-
 			Vector3 candidatePos = candidate.transform.position;
 			float distSqLeft = (leftHandPos - candidatePos).sqrMagnitude;
 			float distSqRight = (rightHandPos - candidatePos).sqrMagnitude;
 			float closerDistSq = Mathf.Min(distSqLeft, distSqRight);
 
-			// Check if this candidate is within max distance AND closer than the current best
 			if (closerDistSq <= maxDistSq && closerDistSq < minDistanceSq)
 			{
 				minDistanceSq = closerDistSq;
@@ -240,32 +227,28 @@ public class VoiceGrabController : MonoBehaviour
 			}
 		}
 
-		// Check if a suitable candidate was found within range
 		if (closestCandidate == null)
 		{
 			Debug.LogWarning($"Voice Grab: Object matching '{targetCleanedName}' found, but all available instances are too far away (Max Distance: {maxGrabDistance}).");
-			ttsSpeaker.SpeakQueued($"{targetCleanedName} is too far away.");
+			SpeakIfAvailable($"{targetCleanedName} is too far away.");
 			return;
 		}
 
-		// Determine which hand is closer to the chosen closest candidate
-		// Recalculate final distances to the chosen candidate
 		float finalDistLeft = (leftHandPos - closestCandidate.transform.position).sqrMagnitude;
 		float finalDistRight = (rightHandPos - closestCandidate.transform.position).sqrMagnitude;
 		bool preferLeft = finalDistLeft <= finalDistRight;
 
-		// Attempt grab with the preferred hand, fallback to the other if busy
 		if (preferLeft)
 		{
 			if (heldObjectLeft == null) PerformGrab(closestCandidate, leftHandController, ref heldObjectLeft, ref heldObjectRbLeft, ref originalParentLeft);
 			else if (heldObjectRight == null) PerformGrab(closestCandidate, rightHandController, ref heldObjectRight, ref heldObjectRbRight, ref originalParentRight);
-			else ttsSpeaker.SpeakQueued("Both hands are full.");
+			else SpeakIfAvailable("Both hands are full.");
 		}
-		else // Prefer Right
+		else
 		{
 			if (heldObjectRight == null) PerformGrab(closestCandidate, rightHandController, ref heldObjectRight, ref heldObjectRbRight, ref originalParentRight);
 			else if (heldObjectLeft == null) PerformGrab(closestCandidate, leftHandController, ref heldObjectLeft, ref heldObjectRbLeft, ref originalParentLeft);
-			else ttsSpeaker.SpeakQueued("Both hands are full.");
+			else SpeakIfAvailable("Both hands are full.");
 		}
 	}
 
@@ -279,7 +262,7 @@ public class VoiceGrabController : MonoBehaviour
 			if (heldObjectLeft != null) PerformRelease(leftHandController, ref heldObjectLeft, ref heldObjectRbLeft, ref originalParentLeft);
 			else SpeakIfAvailable("Left hand is empty.");
 		}
-		else // Release Right Hand
+		else
 		{
 			if (heldObjectRight != null) PerformRelease(rightHandController, ref heldObjectRight, ref heldObjectRbRight, ref originalParentRight);
 			else SpeakIfAvailable("Right hand is empty.");
@@ -306,7 +289,6 @@ public class VoiceGrabController : MonoBehaviour
 		if (heldObjectLeft != null)
 		{
 			string heldCleanedLeft = CleanNameForDictionary(heldObjectLeft.gameObject.name);
-			// Check if the cleaned name of the held object exactly matches the target cleaned name
 			if (heldCleanedLeft.Equals(targetCleanedName, StringComparison.Ordinal))
 			{
 				PerformRelease(leftHandController, ref heldObjectLeft, ref heldObjectRbLeft, ref originalParentLeft);
@@ -315,7 +297,7 @@ public class VoiceGrabController : MonoBehaviour
 		}
 
 		// Check Right Hand (only if left didn't match or wasn't holding the target)
-		if (heldObjectRight != null && !releasedSomething) // Avoid releasing twice if both hands hold same named object and only one was requested
+		if (heldObjectRight != null && !releasedSomething)
 		{
 			string heldCleanedRight = CleanNameForDictionary(heldObjectRight.gameObject.name);
 			if (heldCleanedRight.Equals(targetCleanedName, StringComparison.Ordinal))
@@ -325,7 +307,7 @@ public class VoiceGrabController : MonoBehaviour
 			}
 		}
 		// Check Right Hand again if left hand was released, in case user wants to release all matching objects
-		else if (heldObjectRight != null && releasedSomething && heldObjectLeft == null) // Check right hand again if left was just released
+		else if (heldObjectRight != null && releasedSomething && heldObjectLeft == null)
 		{
 			string heldCleanedRight = CleanNameForDictionary(heldObjectRight.gameObject.name);
 			if (heldCleanedRight.Equals(targetCleanedName, StringComparison.Ordinal))
@@ -335,17 +317,14 @@ public class VoiceGrabController : MonoBehaviour
 			}
 		}
 
-
 		if (!releasedSomething)
 		{
-			// We know the name exists because targetCleanedName is not null, so they must not be holding it.
 			SpeakIfAvailable($"Not currently holding {targetCleanedName}.");
 		}
 	}
 
 	/// <summary>
 	/// Releases the object held in the specified hand ("left" or "right").
-	/// Expects simple "left" or "right" input.
 	/// </summary>
 	public void DropItem(string hand)
 	{
@@ -353,20 +332,12 @@ public class VoiceGrabController : MonoBehaviour
 
 		if (lowerHand == "left")
 		{
-			if (heldObjectLeft != null)
-			{
-				// Release already speaks the name
-				PerformRelease(leftHandController, ref heldObjectLeft, ref heldObjectRbLeft, ref originalParentLeft);
-			}
+			if (heldObjectLeft != null) PerformRelease(leftHandController, ref heldObjectLeft, ref heldObjectRbLeft, ref originalParentLeft);
 			else SpeakIfAvailable("Left hand empty.");
 		}
 		else if (lowerHand == "right")
 		{
-			if (heldObjectRight != null)
-			{
-				// Release already speaks the name
-				PerformRelease(rightHandController, ref heldObjectRight, ref heldObjectRbRight, ref originalParentRight);
-			}
+			if (heldObjectRight != null) PerformRelease(rightHandController, ref heldObjectRight, ref heldObjectRbRight, ref originalParentRight);
 			else SpeakIfAvailable("Right hand empty.");
 		}
 		else
@@ -384,8 +355,9 @@ public class VoiceGrabController : MonoBehaviour
 		string leftItemName = heldObjectLeft ? CleanNameForDictionary(heldObjectLeft.gameObject.name) : null;
 		string rightItemName = heldObjectRight ? CleanNameForDictionary(heldObjectRight.gameObject.name) : null;
 
-		bool holdingLeft = !string.IsNullOrEmpty(leftItemName);
-		bool holdingRight = !string.IsNullOrEmpty(rightItemName);
+		// Use "unnamed object" check if CleanNameForDictionary returns it
+		bool holdingLeft = !string.IsNullOrEmpty(leftItemName) && leftItemName != "unnamed object";
+		bool holdingRight = !string.IsNullOrEmpty(rightItemName) && rightItemName != "unnamed object";
 
 		string message;
 
@@ -402,6 +374,7 @@ public class VoiceGrabController : MonoBehaviour
 	{
 		if (ttsSpeaker != null && !string.IsNullOrEmpty(textToSpeak))
 		{
+			// Use SpeakQueued to prevent interrupting ongoing speech
 			ttsSpeaker.SpeakQueued(textToSpeak);
 		}
 		else if (ttsSpeaker == null)
@@ -410,74 +383,176 @@ public class VoiceGrabController : MonoBehaviour
 		}
 	}
 
-	// Internal function to handle the attachment logic
+	// --- Internal Grab/Release Logic ---
 	private void PerformGrab(XRGrabInteractable interactable, Transform hand, ref XRGrabInteractable heldObjectRef, ref Rigidbody heldObjectRbRef, ref Transform originalParentRef)
 	{
 		if (interactable == null) return;
 
 		heldObjectRef = interactable;
-		originalParentRef = interactable.transform.parent; // Store original parent
-
+		originalParentRef = interactable.transform.parent;
 		heldObjectRbRef = interactable.GetComponent<Rigidbody>();
 		if (heldObjectRbRef != null)
 		{
-			heldObjectRbRef.isKinematic = true; // Make kinematic while held
-			heldObjectRbRef.interpolation = RigidbodyInterpolation.None; // Optional: Turn off interpolation while kinematic parented
+			heldObjectRbRef.isKinematic = true;
+			heldObjectRbRef.interpolation = RigidbodyInterpolation.None;
 		}
-
-		// Parent the object to the hand
 		interactable.transform.SetParent(hand);
-
-		// Reset local position and rotation relative to the hand
-		// You might want to adjust this based on how you want the object oriented in the hand
 		interactable.transform.localPosition = Vector3.zero;
 		interactable.transform.localRotation = Quaternion.identity;
-
-		// Disable the interactable's ability to be grabbed by standard controllers while voice-held
-		// interactable.enabled = false; // Be careful with this, might interfere if you want standard interaction fallback
 
 		string cleanedName = CleanNameForDictionary(interactable.name);
 		Debug.Log($"Voice Grab: {hand.name} grabbed {cleanedName} (Actual: {interactable.name})");
 		SpeakIfAvailable($"Grabbed {cleanedName}.");
 	}
 
-	// Internal function to handle the detachment logic
 	private void PerformRelease(Transform hand, ref XRGrabInteractable heldObjectRef, ref Rigidbody heldObjectRbRef, ref Transform originalParentRef)
 	{
 		if (heldObjectRef == null) return;
 
-		XRGrabInteractable interactableToRelease = heldObjectRef; // Keep reference before nulling
+		XRGrabInteractable interactableToRelease = heldObjectRef;
 		Rigidbody rbToRelease = heldObjectRbRef;
 		Transform parentToRestore = originalParentRef;
 
 		string actualName = interactableToRelease.name;
-		string cleanedName = CleanNameForDictionary(actualName); // Use the same cleaning as dictionary
+		string cleanedName = CleanNameForDictionary(actualName);
 		Debug.Log($"Voice Release: {hand.name} releasing {cleanedName} (Actual: {actualName})");
 
-		// Restore original parent
 		interactableToRelease.transform.SetParent(parentToRestore);
 
-		// Restore Rigidbody state
 		if (rbToRelease != null)
 		{
-			rbToRelease.isKinematic = false; // Make non-kinematic again
-											 // Optional: Restore interpolation if you changed it
-											 // rbToRelease.interpolation = RigidbodyInterpolation.Interpolate;
-			rbToRelease.linearVelocity = Vector3.zero; // Reset velocity (or apply throw physics if desired)
+			rbToRelease.isKinematic = false;
+			rbToRelease.linearVelocity = Vector3.zero;
 			rbToRelease.angularVelocity = Vector3.zero;
 		}
 
-		// Re-enable the interactable for standard grabbing if it was disabled
-		// interactableToRelease.enabled = true;
-
-		// Clear the references for the hand
 		heldObjectRef = null;
 		heldObjectRbRef = null;
 		originalParentRef = null;
 
-		// Speak AFTER clearing references, using the stored cleaned name
 		SpeakIfAvailable($"Released {cleanedName}.");
 	}
 
-	
+	// --- MODIFIED FUNCTION ---
+	/// <summary>
+	/// Calculates the distance from the main camera to the closest object
+	/// matching the beginning of the dictated input. Also speaks the result using TTS.
+	/// </summary>
+	/// <param name="dictatedInput">The voice input potentially containing the object name.</param>
+	/// <returns>The distance to the closest matching object, or -1f if not found or camera is missing.</returns>
+	public void  GetObjectDistanceToCamera(string dictatedInput)
+	{
+		if (mainCamera == null)
+		{
+			Debug.LogError("GetObjectDistanceToCamera: Main Camera is not set or found.");
+			SpeakIfAvailable("I can't locate the object without the main camera."); // Added TTS feedback
+			return	;
+		}
+
+		string targetCleanedName = FindBestMatchingCleanedName(dictatedInput);
+
+		if (targetCleanedName == null)
+		{
+			Debug.LogWarning($"GetObjectDistanceToCamera: Cannot find any known object matching the start of '{dictatedInput}'.");
+			SpeakIfAvailable($"Sorry, I don't know what {dictatedInput} is."); // Added TTS feedback
+			return;
+		}
+
+		if (!grabbableObjectsByCleanName.TryGetValue(targetCleanedName, out List<XRGrabInteractable> candidates))
+		{
+			Debug.LogError($"GetObjectDistanceToCamera: Internal error. Found key '{targetCleanedName}' but no corresponding list.");
+			SpeakIfAvailable("Sorry, something went wrong finding that object."); // Added TTS feedback
+			return;
+		}
+
+		List<XRGrabInteractable> validCandidates = candidates
+			.Where(c => c != null && c.gameObject != null)
+			.ToList();
+
+		if (validCandidates.Count == 0)
+		{
+			Debug.LogWarning($"GetObjectDistanceToCamera: Found match for '{targetCleanedName}', but no valid objects currently exist in the scene.");
+			SpeakIfAvailable($"I can't find any {targetCleanedName} right now."); // Added TTS feedback
+			return;
+		}
+
+		XRGrabInteractable closestCandidate = null;
+		float minDistanceSq = float.MaxValue;
+		Vector3 cameraPosition = mainCamera.transform.position;
+
+		foreach (var candidate in validCandidates)
+		{
+			if (candidate == null || candidate.transform == null) continue;
+			Vector3 candidatePos = candidate.transform.position;
+			float distSq = (cameraPosition - candidatePos).sqrMagnitude;
+			if (distSq < minDistanceSq)
+			{
+				minDistanceSq = distSq;
+				closestCandidate = candidate;
+			}
+		}
+
+		if (closestCandidate == null)
+		{
+			Debug.LogError("GetObjectDistanceToCamera: Failed to determine closest candidate despite having valid options.");
+			SpeakIfAvailable("Sorry, I had trouble finding the closest object."); // Added TTS feedback
+			return;
+		}
+
+		// --- Calculate Distance and Direction ---
+		Vector3 closestObjectPosition = closestCandidate.transform.position;
+		float actualDistance = Vector3.Distance(cameraPosition, closestObjectPosition);
+		string objectActualCleanedName = CleanNameForDictionary(closestCandidate.name); // Get specific name
+
+		// Calculate relative direction
+		Vector3 directionToObject = closestObjectPosition - cameraPosition;
+		Vector3 directionHorizontal = Vector3.ProjectOnPlane(directionToObject, Vector3.up).normalized; // Project to XZ plane and normalize
+		string directionString = "nearby"; // Default
+
+		// Check if the horizontal direction is valid (not directly above/below)
+		if (directionHorizontal.sqrMagnitude > 0.001f) // Avoid issues with zero vector
+		{
+			Vector3 cameraForwardHorizontal = Vector3.ProjectOnPlane(mainCamera.transform.forward, Vector3.up).normalized;
+			float angle = Vector3.SignedAngle(cameraForwardHorizontal, directionHorizontal, Vector3.up);
+
+			// Determine direction string based on angle
+			if (angle >= -45f && angle < 45f)
+			{
+				directionString = "in front of you";
+			}
+			else if (angle >= 45f && angle < 135f)
+			{
+				directionString = "to your right";
+			}
+			else if (angle < -45f && angle >= -135f)
+			{
+				directionString = "to your left";
+			}
+			else // Angle > 135f or < -135f
+			{
+				directionString = "behind you";
+			}
+		}
+		else
+		{
+			// Handle cases directly above or below if needed, otherwise default works
+			// For now, keep the "nearby" default or refine if needed
+			// Example: Check directionToObject.y to determine above/below
+			if (directionToObject.y > 0) directionString = "above you";
+			else if (directionToObject.y < 0) directionString = "below you";
+			// If keeping simple 4 directions, default to "in front" might be better than "nearby"
+			// directionString = "in front of you";
+		}
+
+
+		// --- Speak the result ---
+		string distanceString = actualDistance.ToString("F1"); // Format distance to 1 decimal place
+		string message = $"{objectActualCleanedName} is {distanceString} meters {directionString}.";
+		SpeakIfAvailable(message);
+
+		Debug.Log($"GetObjectDistanceToCamera: Closest object matching '{targetCleanedName}' is '{closestCandidate.name}' ({objectActualCleanedName}) at {actualDistance} units, direction: {directionString}. Angle: {Vector3.SignedAngle(Vector3.ProjectOnPlane(mainCamera.transform.forward, Vector3.up).normalized, directionHorizontal, Vector3.up):F1}"); // Added angle to log
+
+		return	;
+	}
+
 }
