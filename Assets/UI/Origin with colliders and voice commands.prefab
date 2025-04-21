@@ -73,6 +73,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 7743027442557950263}
   m_SourcePrefab: {fileID: 100100000, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+--- !u!1 &485933256934180418 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 1254541850620274799}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1254541850821984127 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 202364688, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -567,9 +572,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1254541852222898078}
     - target: {fileID: 6931212799899161631, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: objectsToIgnore.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6931212799899161631, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: 'objectsToIgnore.Array.data[1]'
       value: 
       objectReference: {fileID: 2609244235987119813}
+    - target: {fileID: 6931212799899161631, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: 'objectsToIgnore.Array.data[2]'
+      value: 
+      objectReference: {fileID: 485933256934180418}
     - target: {fileID: 7218696924274535921, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -610,6 +623,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8295057921311927996, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: ignoreList.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8295057921311927996, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: 'ignoreList.Array.data[0]'
+      value: 
+      objectReference: {fileID: 485933256934180418}
+    - target: {fileID: 8295057921311927996, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: 'ignoreList.Array.data[3]'
+      value: 
+      objectReference: {fileID: 2609244235987119813}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
