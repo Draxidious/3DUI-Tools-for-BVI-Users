@@ -75,3 +75,5 @@ crashlytics-build.properties
 
 #Ignore OpenAPIKey
 /Assets/OpenAIAPIKey.cs
+Assets/Scripts/ObjectInteraction/ChatGPTClient.cs
+Assets/Scripts/ObjectInteraction/ChatGPTClient.cs

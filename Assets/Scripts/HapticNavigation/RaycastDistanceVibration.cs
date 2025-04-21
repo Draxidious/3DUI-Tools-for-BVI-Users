@@ -44,15 +44,15 @@ public class RaycastDistanceVibration : MonoBehaviour
         {
             end = hit.point;
 
-            if (hit.collider.CompareTag(detectableTag))
-            {
-                hitKey = true;
-                float distance = hit.distance;
-                float intensity = Mathf.Clamp01(1f - (distance / maxRayDistance));
-                SendHaptic(intensity, 0.1f);
+            //if (hit.collider.CompareTag(detectableTag))
+            //{
+            hitKey = true;
+            float distance = hit.distance;
+            float intensity = Mathf.Clamp01(1f - (distance / maxRayDistance));
+            SendHaptic(intensity, 0.1f);
 
-                lineRenderer.material.color = Color.green;
-            }
+            lineRenderer.material.color = Color.green;
+            //}
         }
 
         if (!hitKey)
