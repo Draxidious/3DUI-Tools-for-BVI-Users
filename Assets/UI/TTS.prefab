@@ -392,11 +392,12 @@ GameObject:
   - component: {fileID: 2246297825114506176}
   - component: {fileID: 8520944032712556052}
   - component: {fileID: 4199400466331565547}
+  - component: {fileID: 4102872019355858851}
   - component: {fileID: 1468998181149227524}
   m_Layer: 0
   m_Name: TTS
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -433,6 +434,97 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   appVoiceExperience: {fileID: 3240817338352043586}
+  stringStringWordActions:
+  - triggerWord: for
+    separatorPhrase: put
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: SetTextInputValueByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    reverseParameterOrder: 0
+  - triggerWord: put
+    separatorPhrase: for
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: SetTextInputValueByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    reverseParameterOrder: 1
+  - triggerWord: select
+    separatorPhrase: for
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: SelectDropdownOptionByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    reverseParameterOrder: 1
+  - triggerWord: for
+    separatorPhrase: select
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: SelectDropdownOptionByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    reverseParameterOrder: 0
+  stringNumberWordActions:
+  - triggerWord: set
+    separatorWord: to
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: SetSliderValueByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
   parameterizedWordActions:
   - triggerWord: grab
     actionToTrigger:
@@ -441,6 +533,102 @@ MonoBehaviour:
         - m_Target: {fileID: 4199400466331565547}
           m_TargetAssemblyTypeName: VoiceGrabController, Assembly-CSharp
           m_MethodName: GrabObjectByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: drop
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4199400466331565547}
+          m_TargetAssemblyTypeName: VoiceGrabController, Assembly-CSharp
+          m_MethodName: ReleaseObjectByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: what's on
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: DescribeCanvasByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: check
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: CheckCheckboxByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: uncheck
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: UncheckCheckboxByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: click
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: InteractWithUIButtonByName
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: press
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 4102872019355858851}
+          m_TargetAssemblyTypeName: VoiceUIController, Assembly-CSharp
+          m_MethodName: InteractWithUIButtonByName
           m_Mode: 0
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -531,8 +719,137 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+  - triggerWord: forward
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: BVIColliderManager, Assembly-CSharp
+          m_MethodName: AnnounceForwardDescription
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: front
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: BVIColliderManager, Assembly-CSharp
+          m_MethodName: AnnounceForwardDescription
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: ahead
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: BVIColliderManager, Assembly-CSharp
+          m_MethodName: AnnounceForwardDescription
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: backward
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: BVIColliderManager, Assembly-CSharp
+          m_MethodName: AnnounceBackwardDescription
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: back
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: BVIColliderManager, Assembly-CSharp
+          m_MethodName: AnnounceBackwardDescription
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: behind
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: BVIColliderManager, Assembly-CSharp
+          m_MethodName: AnnounceBackwardDescription
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: Left
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: BVIColliderManager, Assembly-CSharp
+          m_MethodName: AnnounceLeftDescription
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - triggerWord: right
+    actionToTrigger:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 0}
+          m_TargetAssemblyTypeName: BVIColliderManager, Assembly-CSharp
+          m_MethodName: AnnounceRightDescription
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
   ignoreCase: 1
-  reactivationDelay: 0.5
+  reactivationDelay: 0.05
+  commandCooldownDuration: 0.1
 --- !u!114 &8520944032712556052
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -563,9 +880,29 @@ MonoBehaviour:
   rightHandController: {fileID: 0}
   grabbableLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4294967295
   maxGrabDistance: 3
   ttsSpeaker: {fileID: 1347583433727291527}
+--- !u!114 &4102872019355858851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2848290061727082589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fd162dceb18cfd42bcf88fcb639fa25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ttsSpeaker: {fileID: 1347583433727291527}
+  ttsMaxChunkLength: 250
+  targetCanvas: {fileID: 0}
+  preferElementText: 1
+  describeStandaloneText: 1
+  describeInactiveState: 1
+  ignorePlaceholderWhenReading: 1
+  postClickCheckDelay: 0.1
 --- !u!82 &1468998181149227524
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1252,7 +1589,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShouldWrap: 1
-  ShouldLog: 1
+  ShouldLog: 0
   dictationEvents:
     _onRequestOptionSetup:
       m_PersistentCalls:

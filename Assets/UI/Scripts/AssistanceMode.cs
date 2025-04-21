@@ -5,8 +5,8 @@ using System;              // For StringComparison, NonSerialized, TryParse
 using System.Collections; // Required for Coroutines
 using System.Collections.Generic; // To use List<>
 using System.Globalization; // For NumberStyles, CultureInfo
-
-// --- Structures for Command Configuration ---
+using Meta.WitAi.TTS.Utilities; // Namespace for Meta TTSSpeaker
+								// --- Structures for Command Configuration ---
 
 // For simple commands WITHOUT parameters
 [System.Serializable]
@@ -97,7 +97,8 @@ public class AssistanceMode : MonoBehaviour
 
 	[Tooltip("Simple commands that do not expect a parameter (e.g., 'show help', 'status'). Processed last.")]
 	[SerializeField] private List<SimpleWordActionPair> simpleWordActions = new List<SimpleWordActionPair>();
-
+	[Header("TTS Settings")]
+	public TTSSpeaker ttsSpeaker;
 
 	[Space]
 	[Header("Settings")]
@@ -110,7 +111,7 @@ public class AssistanceMode : MonoBehaviour
 	[Tooltip("Cooldown time in seconds before the *same* command can be triggered again.")]
 	[SerializeField] private float commandCooldownDuration = 5.0f; // Default to 5 seconds
 
-
+	public bool isListening = true;
 	// --- Private State ---
 	private bool isActivating = false;
 	private Coroutine reactivationCoroutine = null;
@@ -199,207 +200,208 @@ public class AssistanceMode : MonoBehaviour
 
 		// --- IMPORTANT: Process commands in order of specificity (most specific first) ---
 
-		// 1. Check for String + String Commands
-		if (stringStringWordActions != null && !commandRecognizedThisTranscript)
-		{
-			foreach (StringStringWordActionPair pair in stringStringWordActions)
+		if (isListening)
+		{   // 1. Check for String + String Commands
+			if (stringStringWordActions != null && !commandRecognizedThisTranscript)
 			{
-				if (string.IsNullOrEmpty(pair.triggerWord) || string.IsNullOrEmpty(pair.separatorPhrase)) continue;
-
-				// Check if transcript starts with the trigger word (whole word)
-				if (transcript.StartsWith(pair.triggerWord, comparison))
+				foreach (StringStringWordActionPair pair in stringStringWordActions)
 				{
-					int triggerEndIndex = pair.triggerWord.Length;
-					// Ensure it's a whole word match at the start (check boundary)
-					if (triggerEndIndex >= transcript.Length || !char.IsLetterOrDigit(transcript[triggerEndIndex]))
+					if (string.IsNullOrEmpty(pair.triggerWord) || string.IsNullOrEmpty(pair.separatorPhrase)) continue;
+
+					// Check if transcript starts with the trigger word (whole word)
+					if (transcript.StartsWith(pair.triggerWord, comparison))
 					{
-						string textAfterTrigger = transcript.Substring(triggerEndIndex).TrimStart();
-
-						// Find the separator phrase (case-insensitive), checking whole word boundaries
-						int separatorIndex = -1;
-						int currentSearchIndex = 0;
-						while (currentSearchIndex < textAfterTrigger.Length)
+						int triggerEndIndex = pair.triggerWord.Length;
+						// Ensure it's a whole word match at the start (check boundary)
+						if (triggerEndIndex >= transcript.Length || !char.IsLetterOrDigit(transcript[triggerEndIndex]))
 						{
-							int potentialIndex = textAfterTrigger.IndexOf(pair.separatorPhrase, currentSearchIndex, comparison);
-							if (potentialIndex == -1) break; // Separator not found
+							string textAfterTrigger = transcript.Substring(triggerEndIndex).TrimStart();
 
-							// Check boundaries
-							bool startBoundaryOK = (potentialIndex == 0) || !char.IsLetterOrDigit(textAfterTrigger[potentialIndex - 1]);
-							int separatorEndIndex = potentialIndex + pair.separatorPhrase.Length;
-							bool endBoundaryOK = (separatorEndIndex == textAfterTrigger.Length) || !char.IsLetterOrDigit(textAfterTrigger[separatorEndIndex]);
-
-							if (startBoundaryOK && endBoundaryOK)
+							// Find the separator phrase (case-insensitive), checking whole word boundaries
+							int separatorIndex = -1;
+							int currentSearchIndex = 0;
+							while (currentSearchIndex < textAfterTrigger.Length)
 							{
-								separatorIndex = potentialIndex;
-								break; // Found valid separator
-							}
-							// Separator found but not as whole word, continue searching after this instance
-							currentSearchIndex = potentialIndex + 1;
-						}
+								int potentialIndex = textAfterTrigger.IndexOf(pair.separatorPhrase, currentSearchIndex, comparison);
+								if (potentialIndex == -1) break; // Separator not found
 
+								// Check boundaries
+								bool startBoundaryOK = (potentialIndex == 0) || !char.IsLetterOrDigit(textAfterTrigger[potentialIndex - 1]);
+								int separatorEndIndex = potentialIndex + pair.separatorPhrase.Length;
+								bool endBoundaryOK = (separatorEndIndex == textAfterTrigger.Length) || !char.IsLetterOrDigit(textAfterTrigger[separatorEndIndex]);
 
-						if (separatorIndex > 0) // Separator found, and there must be text before it
-						{
-							string stringParam1 = textAfterTrigger.Substring(0, separatorIndex).Trim(); // Text before separator
-							string stringParam2 = textAfterTrigger.Substring(separatorIndex + pair.separatorPhrase.Length).Trim(); // Text after separator
-
-							// Ensure both parameters are non-empty after trimming
-							if (!string.IsNullOrWhiteSpace(stringParam1) && !string.IsNullOrWhiteSpace(stringParam2))
-							{
-								// Check per-command cooldown
-								if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
+								if (startBoundaryOK && endBoundaryOK)
 								{
-									pair.lastExecutionTime = Time.time; // Update timestamp before invoking
+									separatorIndex = potentialIndex;
+									break; // Found valid separator
+								}
+								// Separator found but not as whole word, continue searching after this instance
+								currentSearchIndex = potentialIndex + 1;
+							}
 
-									// *** MODIFIED PART: Check reverseParameterOrder flag ***
-									if (pair.reverseParameterOrder)
+
+							if (separatorIndex > 0) // Separator found, and there must be text before it
+							{
+								string stringParam1 = textAfterTrigger.Substring(0, separatorIndex).Trim(); // Text before separator
+								string stringParam2 = textAfterTrigger.Substring(separatorIndex + pair.separatorPhrase.Length).Trim(); // Text after separator
+
+								// Ensure both parameters are non-empty after trimming
+								if (!string.IsNullOrWhiteSpace(stringParam1) && !string.IsNullOrWhiteSpace(stringParam2))
+								{
+									// Check per-command cooldown
+									if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
 									{
-										// Invoke with reversed order
-										Debug.LogWarning($"String/String command '{pair.triggerWord}' DETECTED. Invoking with REVERSED order: param1='{stringParam2}', param2='{stringParam1}'");
-										pair.actionToTrigger?.Invoke(stringParam2, stringParam1);
+										pair.lastExecutionTime = Time.time; // Update timestamp before invoking
+
+										// *** MODIFIED PART: Check reverseParameterOrder flag ***
+										if (pair.reverseParameterOrder)
+										{
+											// Invoke with reversed order
+											Debug.LogWarning($"String/String command '{pair.triggerWord}' DETECTED. Invoking with REVERSED order: param1='{stringParam2}', param2='{stringParam1}'");
+											pair.actionToTrigger?.Invoke(stringParam2, stringParam1);
+										}
+										else
+										{
+											// Invoke with normal order
+											Debug.LogWarning($"String/String command '{pair.triggerWord}' DETECTED. Invoking with normal order: param1='{stringParam1}', param2='{stringParam2}'");
+											pair.actionToTrigger?.Invoke(stringParam1, stringParam2);
+										}
+
+										commandRecognizedThisTranscript = true;
+										break; // Found match, stop checking this type
 									}
 									else
 									{
-										// Invoke with normal order
-										Debug.LogWarning($"String/String command '{pair.triggerWord}' DETECTED. Invoking with normal order: param1='{stringParam1}', param2='{stringParam2}'");
-										pair.actionToTrigger?.Invoke(stringParam1, stringParam2);
+										Debug.LogWarning($"String/String command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
 									}
-
-									commandRecognizedThisTranscript = true;
-									break; // Found match, stop checking this type
-								}
-								else
-								{
-									Debug.LogWarning($"String/String command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
 								}
 							}
 						}
 					}
-				}
-			} // End foreach string/string
-		}
+				} // End foreach string/string
+			}
 
 
-		// 2. Check for String + Number Commands (only if no string/string command matched)
-		if (stringNumberWordActions != null && !commandRecognizedThisTranscript)
-		{
-			foreach (StringNumberWordActionPair pair in stringNumberWordActions)
+			// 2. Check for String + Number Commands (only if no string/string command matched)
+			if (stringNumberWordActions != null && !commandRecognizedThisTranscript)
 			{
-				if (string.IsNullOrEmpty(pair.triggerWord) || string.IsNullOrEmpty(pair.separatorWord)) continue;
-
-				if (transcript.StartsWith(pair.triggerWord, comparison))
+				foreach (StringNumberWordActionPair pair in stringNumberWordActions)
 				{
-					int triggerEndIndex = pair.triggerWord.Length;
-					if (triggerEndIndex >= transcript.Length || !char.IsLetterOrDigit(transcript[triggerEndIndex]))
+					if (string.IsNullOrEmpty(pair.triggerWord) || string.IsNullOrEmpty(pair.separatorWord)) continue;
+
+					if (transcript.StartsWith(pair.triggerWord, comparison))
 					{
-						string remainingTranscript = transcript.Substring(triggerEndIndex).TrimStart();
-						int separatorIndex = -1;
-						int currentSearchIndex = 0;
-						while (currentSearchIndex < remainingTranscript.Length)
+						int triggerEndIndex = pair.triggerWord.Length;
+						if (triggerEndIndex >= transcript.Length || !char.IsLetterOrDigit(transcript[triggerEndIndex]))
 						{
-							int potentialIndex = remainingTranscript.IndexOf(pair.separatorWord, currentSearchIndex, comparison);
-							if (potentialIndex == -1) break;
-
-							bool startBoundaryOK = (potentialIndex == 0) || !char.IsLetterOrDigit(remainingTranscript[potentialIndex - 1]);
-							int separatorEndIndex = potentialIndex + pair.separatorWord.Length;
-							bool endBoundaryOK = (separatorEndIndex == remainingTranscript.Length) || !char.IsLetterOrDigit(remainingTranscript[separatorEndIndex]);
-
-							if (startBoundaryOK && endBoundaryOK)
+							string remainingTranscript = transcript.Substring(triggerEndIndex).TrimStart();
+							int separatorIndex = -1;
+							int currentSearchIndex = 0;
+							while (currentSearchIndex < remainingTranscript.Length)
 							{
-								separatorIndex = potentialIndex;
-								break;
+								int potentialIndex = remainingTranscript.IndexOf(pair.separatorWord, currentSearchIndex, comparison);
+								if (potentialIndex == -1) break;
+
+								bool startBoundaryOK = (potentialIndex == 0) || !char.IsLetterOrDigit(remainingTranscript[potentialIndex - 1]);
+								int separatorEndIndex = potentialIndex + pair.separatorWord.Length;
+								bool endBoundaryOK = (separatorEndIndex == remainingTranscript.Length) || !char.IsLetterOrDigit(remainingTranscript[separatorEndIndex]);
+
+								if (startBoundaryOK && endBoundaryOK)
+								{
+									separatorIndex = potentialIndex;
+									break;
+								}
+								currentSearchIndex = potentialIndex + 1;
 							}
-							currentSearchIndex = potentialIndex + 1;
+
+
+							if (separatorIndex > 0)
+							{
+								string stringParam = remainingTranscript.Substring(0, separatorIndex).Trim();
+								string potentialNumberParam = remainingTranscript.Substring(separatorIndex + pair.separatorWord.Length).Trim();
+
+								if (!string.IsNullOrWhiteSpace(stringParam) &&
+									TryParseNumberWord(potentialNumberParam, out int numberParam))
+								{
+									if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
+									{
+										Debug.LogWarning($"String/Number command '{pair.triggerWord}' DETECTED with string: '{stringParam}', number: {numberParam} (parsed from '{potentialNumberParam}')");
+										pair.lastExecutionTime = Time.time;
+										pair.actionToTrigger?.Invoke(stringParam, numberParam);
+										commandRecognizedThisTranscript = true;
+										break;
+									}
+									else
+									{
+										Debug.LogWarning($"String/Number command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
+									}
+								}
+							}
 						}
+					}
+				} // End foreach string/number
+			}
 
 
-						if (separatorIndex > 0)
+			// 3. Check for Single Parameterized Commands (only if no other command matched)
+			if (parameterizedWordActions != null && !commandRecognizedThisTranscript)
+			{
+				foreach (ParameterizedWordActionPair pair in parameterizedWordActions)
+				{
+					if (string.IsNullOrEmpty(pair.triggerWord)) continue;
+
+					if (transcript.StartsWith(pair.triggerWord, comparison))
+					{
+						int triggerEndIndex = pair.triggerWord.Length;
+						if (triggerEndIndex >= transcript.Length || !char.IsLetterOrDigit(transcript[triggerEndIndex]))
 						{
-							string stringParam = remainingTranscript.Substring(0, separatorIndex).Trim();
-							string potentialNumberParam = remainingTranscript.Substring(separatorIndex + pair.separatorWord.Length).Trim();
-
-							if (!string.IsNullOrWhiteSpace(stringParam) &&
-								TryParseNumberWord(potentialNumberParam, out int numberParam))
+							string parameter = transcript.Substring(triggerEndIndex).Trim();
+							if (!string.IsNullOrWhiteSpace(parameter))
 							{
 								if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
 								{
-									Debug.LogWarning($"String/Number command '{pair.triggerWord}' DETECTED with string: '{stringParam}', number: {numberParam} (parsed from '{potentialNumberParam}')");
+									Debug.Log($"Parameterized command '{pair.triggerWord}' DETECTED with parameter: '{parameter}'");
 									pair.lastExecutionTime = Time.time;
-									pair.actionToTrigger?.Invoke(stringParam, numberParam);
+									pair.actionToTrigger?.Invoke(parameter);
 									commandRecognizedThisTranscript = true;
 									break;
 								}
 								else
 								{
-									Debug.LogWarning($"String/Number command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
+									Debug.Log($"Parameterized command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
 								}
 							}
 						}
 					}
-				}
-			} // End foreach string/number
-		}
+				} // End foreach parameterized
+			}
 
-
-		// 3. Check for Single Parameterized Commands (only if no other command matched)
-		if (parameterizedWordActions != null && !commandRecognizedThisTranscript)
-		{
-			foreach (ParameterizedWordActionPair pair in parameterizedWordActions)
+			// 4. Check for Simple Commands (only if no other command matched)
+			if (simpleWordActions != null && !commandRecognizedThisTranscript)
 			{
-				if (string.IsNullOrEmpty(pair.triggerWord)) continue;
-
-				if (transcript.StartsWith(pair.triggerWord, comparison))
+				foreach (SimpleWordActionPair pair in simpleWordActions)
 				{
-					int triggerEndIndex = pair.triggerWord.Length;
-					if (triggerEndIndex >= transcript.Length || !char.IsLetterOrDigit(transcript[triggerEndIndex]))
+					if (string.IsNullOrEmpty(pair.triggerWord)) continue;
+
+					if (string.Equals(transcript.Trim(), pair.triggerWord, comparison))
 					{
-						string parameter = transcript.Substring(triggerEndIndex).Trim();
-						if (!string.IsNullOrWhiteSpace(parameter))
+						if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
 						{
-							if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
-							{
-								Debug.Log($"Parameterized command '{pair.triggerWord}' DETECTED with parameter: '{parameter}'");
-								pair.lastExecutionTime = Time.time;
-								pair.actionToTrigger?.Invoke(parameter);
-								commandRecognizedThisTranscript = true;
-								break;
-							}
-							else
-							{
-								Debug.Log($"Parameterized command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
-							}
+							Debug.Log($"Simple command '{pair.triggerWord}' DETECTED.");
+							pair.lastExecutionTime = Time.time;
+							pair.actionToTrigger?.Invoke();
+							commandRecognizedThisTranscript = true;
+							break;
+						}
+						else
+						{
+							Debug.Log($"Simple command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
 						}
 					}
-				}
-			} // End foreach parameterized
+				} // End foreach simple
+			}
+
 		}
-
-		// 4. Check for Simple Commands (only if no other command matched)
-		if (simpleWordActions != null && !commandRecognizedThisTranscript)
-		{
-			foreach (SimpleWordActionPair pair in simpleWordActions)
-			{
-				if (string.IsNullOrEmpty(pair.triggerWord)) continue;
-
-				if (string.Equals(transcript.Trim(), pair.triggerWord, comparison))
-				{
-					if (Time.time >= pair.lastExecutionTime + commandCooldownDuration)
-					{
-						Debug.Log($"Simple command '{pair.triggerWord}' DETECTED.");
-						pair.lastExecutionTime = Time.time;
-						pair.actionToTrigger?.Invoke();
-						commandRecognizedThisTranscript = true;
-						break;
-					}
-					else
-					{
-						Debug.Log($"Simple command '{pair.triggerWord}' skipped due to cooldown. Time remaining: {(pair.lastExecutionTime + commandCooldownDuration) - Time.time:F1}s");
-					}
-				}
-			} // End foreach simple
-		}
-
-
 		if (!commandRecognizedThisTranscript)
 		{
 			Debug.Log($"No configured commands recognized or triggered in the transcript: '{transcript}'");
@@ -644,5 +646,16 @@ public class AssistanceMode : MonoBehaviour
 	{
 		Debug.Log("ManualStartDictation called.");
 		ActivateDictationService();
+	}
+
+	public void stopListening()
+	{
+		isListening = false;
+		ttsSpeaker.SpeakQueued($"Listening Off");
+	}
+	public void startListening()
+	{
+		isListening = true;
+		ttsSpeaker.SpeakQueued($"Listening On");
 	}
 }
