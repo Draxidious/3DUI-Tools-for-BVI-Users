@@ -14,7 +14,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_Name
-      value: XR Origin (XR Rig) Variant
+      value: Origin with colliders and voice commands
       objectReference: {fileID: 0}
     - target: {fileID: 1717954561962503726, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -423,6 +423,10 @@ PrefabInstance:
       value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: parameterizedWordActions.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: simpleWordActions.Array.data[13].triggerWord
       value: dictation off
       objectReference: {fileID: 0}
@@ -431,11 +435,19 @@ PrefabInstance:
       value: dictation on
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: parameterizedWordActions.Array.data[7].triggerWord
+      value: where is
+      objectReference: {fileID: 0}
+    - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: simpleWordActions.Array.data[13].actionToTrigger.m_PersistentCalls.m_Calls.Array.size
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: simpleWordActions.Array.data[14].actionToTrigger.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.size
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
@@ -503,12 +515,28 @@ PrefabInstance:
       value: startListening
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 7018396824550975262}
+    - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: GetObjectDistanceToCamera
+      objectReference: {fileID: 0}
+    - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: simpleWordActions.Array.data[13].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: AssistanceMode, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: simpleWordActions.Array.data[14].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: AssistanceMode, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: VoiceGrabController, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: simpleWordActions.Array.data[13].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -518,10 +546,18 @@ PrefabInstance:
       propertyPath: simpleWordActions.Array.data[14].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 2246297825114506176, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 2848290061727082589, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: m_Name
       value: TTS
       objectReference: {fileID: 0}
+    - target: {fileID: 4199400466331565547, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+      propertyPath: mainCamera
+      value: 
+      objectReference: {fileID: 1254541852384698136}
     - target: {fileID: 4199400466331565547, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
       propertyPath: leftHandController
       value: 
@@ -604,5 +640,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b15403450229c3a4b8455a61d6143a6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7018396824550975262 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4199400466331565547, guid: e6a911d7af24f964d80eb951a7f6fdc4, type: 3}
+  m_PrefabInstance: {fileID: 6566563557190294261}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ff2f548af03f4eac333b78823fe2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

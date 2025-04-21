@@ -1512,17 +1512,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &451752019 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7018396824550975262, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-  m_PrefabInstance: {fileID: 113195448106726318}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c30ff2f548af03f4eac333b78823fe2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &483771145
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1910,11 +1899,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60523e0647cc6ab43acc73cb266a32a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!20 &571035098 stripped
-Camera:
-  m_CorrespondingSourceObject: {fileID: 1254541852384698136, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-  m_PrefabInstance: {fileID: 113195448106726318}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &621751406
 GameObject:
   m_ObjectHideFlags: 0
@@ -6273,46 +6257,10 @@ PrefabInstance:
       propertyPath: 'objectsToIgnore.Array.data[0]'
       value: 
       objectReference: {fileID: 1249617917}
-    - target: {fileID: 4903695673355180341, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: parameterizedWordActions.Array.size
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 4903695673355180341, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: parameterizedWordActions.Array.data[7].triggerWord
-      value: where is
-      objectReference: {fileID: 0}
-    - target: {fileID: 4903695673355180341, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4903695673355180341, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 451752019}
-    - target: {fileID: 4903695673355180341, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4903695673355180341, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: GetObjectDistanceToCamera
-      objectReference: {fileID: 0}
-    - target: {fileID: 4903695673355180341, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: VoiceGrabController, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 4903695673355180341, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: parameterizedWordActions.Array.data[7].actionToTrigger.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
-      objectReference: {fileID: 0}
     - target: {fileID: 6874277207346511485, guid: 645761aff57c89a4998d526270cd1912, type: 3}
       propertyPath: dictationExperience
       value: 
       objectReference: {fileID: 1844866332}
-    - target: {fileID: 7018396824550975262, guid: 645761aff57c89a4998d526270cd1912, type: 3}
-      propertyPath: mainCamera
-      value: 
-      objectReference: {fileID: 571035098}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
