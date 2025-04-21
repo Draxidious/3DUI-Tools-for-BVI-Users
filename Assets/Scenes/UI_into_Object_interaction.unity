@@ -5809,6 +5809,11 @@ PrefabInstance:
       addedObject: {fileID: 1570117307}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c748cf15417c4330859b10721703c666, type: 3}
+--- !u!1 &1992982170 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2609244235987119813, guid: 645761aff57c89a4998d526270cd1912, type: 3}
+  m_PrefabInstance: {fileID: 113195448106726318}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2028737088
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6253,6 +6258,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: XR Origin (XR Rig)
       objectReference: {fileID: 0}
+    - target: {fileID: 2899449517559264329, guid: 645761aff57c89a4998d526270cd1912, type: 3}
+      propertyPath: ignoreList.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2899449517559264329, guid: 645761aff57c89a4998d526270cd1912, type: 3}
+      propertyPath: 'ignoreList.Array.data[1]'
+      value: 
+      objectReference: {fileID: 1249617917}
+    - target: {fileID: 2899449517559264329, guid: 645761aff57c89a4998d526270cd1912, type: 3}
+      propertyPath: 'ignoreList.Array.data[2]'
+      value: 
+      objectReference: {fileID: 1992982170}
     - target: {fileID: 4256327786433285866, guid: 645761aff57c89a4998d526270cd1912, type: 3}
       propertyPath: 'objectsToIgnore.Array.data[0]'
       value: 
