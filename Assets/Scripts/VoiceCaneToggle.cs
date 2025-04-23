@@ -26,12 +26,12 @@ public class VoiceCaneController : MonoBehaviour
 
     void Update()
     {
-        if (!isListening && toggleCaneAction.WasPressedThisFrame())
-        {
-            dictationExperience.Activate();
-            isListening = true;
-            Debug.Log("[VoiceCaneController] Dictation activated.");
-        }
+        //if (!isListening && toggleCaneAction.WasPressedThisFrame())
+        //{
+        //    dictationExperience.Activate();
+        //    isListening = true;
+        //    Debug.Log("[VoiceCaneController] Dictation activated.");
+        //}
     }
 
     private void OnTranscription(string transcription)
@@ -44,20 +44,19 @@ public class VoiceCaneController : MonoBehaviour
         {
             if (cleaned.Contains(trigger))
             {
-                bool isCaneActive = caneController.IsCaneActive();
-                caneController.ToggleCane(!isCaneActive);
-                Debug.Log($"[VoiceCaneController] Matched '{trigger}', toggled cane to: " + (!isCaneActive ? "ON" : "OFF"));
+                Debug.Log($"[VoiceCaneController] Matched '{trigger}', toggled cane to: " + (!caneController.IsCaneActive() ? "ON" : "OFF"));
+                ToggleCane();
                 break;
             }
         }
-        string[] triggers2 = { "ray", "rake" };
+        string[] triggers2 = { "finder","binder"};
         foreach (string trigger in triggers2)
         {
             if (cleaned.Contains(trigger))
             {
-                bool active = raycastController.IsRaycastActive();
-                raycastController.ToggleRaycast(!active);
-                Debug.Log($"[VoiceCaneController] Matched '{trigger}', toggled raycast to: " + (!active ? "ON" : "OFF"));
+                Debug.Log($"[VoiceCaneController] Matched '{trigger}', toggled raycast to: " + (!raycastController.IsRaycastActive() ? "ON" : "OFF"));
+                ToggleFinder();
+                break;
             }
                 
         }
@@ -70,5 +69,17 @@ public class VoiceCaneController : MonoBehaviour
     {
         toggleCaneAction?.Disable();
         dictationExperience.DictationEvents.OnFullTranscription.RemoveListener(OnTranscription);
+    }
+
+    public void ToggleCane()
+    {
+        bool isCaneActive = caneController.IsCaneActive();
+        caneController.ToggleCane(!isCaneActive);
+    }
+
+    public void ToggleFinder()
+    {
+        bool active = raycastController.IsRaycastActive();
+        raycastController.ToggleRaycast(!active);
     }
 }
